@@ -2,6 +2,7 @@ from Init import *
 
 
 class Header:
+    Login = "Login"
     Split = "||"
 
 
@@ -21,3 +22,20 @@ def Read(Client, BufferSize):
 
 
 Core = Init("192.168.1.6")
+
+
+class OPAC:
+    def __int__(self, _Init: Init):
+        self.__Init = _Init
+
+    def CreateUser(self, Username: str, password: str):
+        pass
+
+    def IsUser(self, Username: str, password: str):
+        self.__Init.Cursor.execute("")
+
+    def GetLatest(self):
+        pass
+
+    def GetDigital(self, Books):
+        pass

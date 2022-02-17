@@ -18,6 +18,7 @@ class Init:
         self.BufferSize = Buffer
         self.RequestProcessing = Pass
         self.Database = None
+        self.Cursor = None
 
         self.__InitTCP()
         self.__InitDatabase()
@@ -25,6 +26,7 @@ class Init:
     def __InitDatabase(self):
         print("Initializing database")
         self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="test123", port=3307)
+        self.Cursor = self.Database.cursor()
         print("Database initialized")
 
     def __InitTCP(self):
