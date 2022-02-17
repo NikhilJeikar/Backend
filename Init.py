@@ -29,6 +29,9 @@ class Init:
         self.Cursor = self.Database.cursor()
         print("Database initialized")
 
+    def __InitOPAC(self):
+        pass
+
     def __InitTCP(self):
         self._Socket = socket(AF_INET, SOCK_STREAM)
         self._Socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
