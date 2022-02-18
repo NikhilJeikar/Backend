@@ -26,7 +26,7 @@ class Init:
     def __InitDatabase(self):
         print("Initializing database")
         self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="test123", port=3307)
-        self.Cursor = self.Database.cursor()
+        self.Cursor = self.Database.cursor(buffered=True)
         print("Database initialized")
 
     def __InitOPAC(self):
