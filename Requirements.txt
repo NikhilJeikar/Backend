@@ -1,3 +1,4 @@
 mysql-connector-python==8.0.28
 pycountry==22.1.10
 newsapi==0.1.1
+newsapi-python==0.2.6

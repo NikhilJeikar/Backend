@@ -2,6 +2,8 @@ from Init import *
 import hashlib
 import string
 import random
+from newsapi import NewsApiClient
+from datetime import datetime, timedelta
 
 
 # Constants
@@ -16,7 +18,24 @@ class Type:
     Offline = 2
 
 
-Search_Counter = 5
+Core = Init("192.168.1.6")
+NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
+UpdateTime = None
+Headlines = ""
+TargetedHeadlines = {"business": "",
+                     "entertainment": "",
+                     "general": "",
+                     "health": "",
+                     "science": "",
+                     "sports": "",
+                     "technology": ""}
+TargetedHeadlinesUpdateTime = {"business": None,
+                               "entertainment": None,
+                               "general": None,
+                               "health": None,
+                               "science": None,
+                               "sports": None,
+                               "technology": None}
 
 
 # Supporting queries
@@ -81,6 +100,14 @@ def IsUser(Username: str):
     return False
 
 
+def AuthUser(Username: str, Password: str):
+    try:
+        Core.Cursor.execute("SELECT ID FROM Credentials WHERE Username = %s and Password = %s;", (Username, Password))
+        return Core.Cursor.fetchone()[0]
+    except mysql.connector.Error as Error:
+        return None
+
+
 def GetPrivilege(Username: str):
     try:
         Core.Cursor.execute("SELECT Privilege FROM Credentials WHERE Username = %s;", (Username,))
@@ -138,26 +165,26 @@ def RemoveBookRecord(ISBN: str):
 """
 Searches 
 param Key: [Name, ISBN, Author]
-return First N(val:Search_Counter) values in [BookName,ISBN,Author,Availability,TYPE] this order
+return First N values in [BookName,ISBN,Author,Availability,TYPE] this order
 """
 
 
-def SearchBookName(Name: str):
+def SearchBookName(Name: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE BookName like %s;",
                         (Name + "%",))
-    return Core.Cursor.fetchmany(Search_Counter)
+    return Core.Cursor.fetchmany(N)
 
 
-def SearchISBN(ISBN: str):
+def SearchISBN(ISBN: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE ISBN like %s;",
                         (ISBN + "%",))
-    return Core.Cursor.fetchmany(Search_Counter)
+    return Core.Cursor.fetchmany(N)
 
 
-def SearchAuthor(Author: str):
+def SearchAuthor(Author: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE Author like %s;",
                         (Author + "%",))
-    return Core.Cursor.fetchmany(Search_Counter)
+    return Core.Cursor.fetchmany(N)
 
 
 # Digital books related queries
@@ -198,8 +225,48 @@ def GetDigital(ISBN: str):
     return Core.Cursor.fetchone()[0]
 
 
-def GetLatest(self):
-    pass
+# Update headlines
+def UpdateLatestNews():
+    global UpdateTime, Headlines
+    newsapi = NewsApiClient(api_key=NewsAPIClientKey)
+    if UpdateTime is None or UpdateTime - datetime.now() > timedelta(minutes=30):
+        Headlines = newsapi.get_top_headlines()
+        if Headlines["status"] == "ok":
+            UpdateTime = datetime.now()
+            return True
+        else:
+            return False
+    return True
 
 
-Core = Init("192.168.1.6")
+def UpdateAllLatestNewsCategory():
+    global TargetedHeadlines, TargetedHeadlinesUpdateTime
+    newsapi = NewsApiClient(api_key=NewsAPIClientKey)
+    for key in TargetedHeadlines.keys():
+        if TargetedHeadlinesUpdateTime[key] is None or TargetedHeadlinesUpdateTime[key] - datetime.now() > timedelta(
+                minutes=30):
+            Data = newsapi.get_top_headlines(category=key)
+            if Data["status"] == "ok":
+                TargetedHeadlinesUpdateTime[key] = datetime.now()
+                TargetedHeadlines[key] = Data
+
+
+def UpdateLatestNewsCategory(Category: str):
+    global TargetedHeadlines, TargetedHeadlinesUpdateTime
+    newsapi = NewsApiClient(api_key=NewsAPIClientKey)
+    if TargetedHeadlinesUpdateTime[Category] is None or\
+            TargetedHeadlinesUpdateTime[Category] - datetime.now() > timedelta(minutes=30):
+        Data = newsapi.get_top_headlines(category=Category)
+        if Data["status"] == "ok":
+            TargetedHeadlinesUpdateTime[Category] = datetime.now()
+            TargetedHeadlines[Category] = Data
+
+
+def GetNewsCategory(Category: str):
+    UpdateLatestNewsCategory(Category)
+    return TargetedHeadlines[Category]
+
+
+def GetLatestNewCategory():
+    UpdateLatestNews()
+    return Headlines

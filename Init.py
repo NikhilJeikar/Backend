@@ -19,7 +19,6 @@ class Init:
         self.RequestProcessing = Pass
         self.Database = None
         self.Cursor = None
-
         self.__InitTCP()
         self.__InitDatabase()
 
@@ -28,9 +27,6 @@ class Init:
         self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="test123", port=3307)
         self.Cursor = self.Database.cursor(buffered=True)
         print("Database initialized")
-
-    def __InitOPAC(self):
-        pass
 
     def __InitTCP(self):
         self._Socket = socket(AF_INET, SOCK_STREAM)

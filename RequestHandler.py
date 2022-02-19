@@ -1,14 +1,14 @@
 class Header:
     Split = "||"
-
     CreateUser = ""
     CreateAdmin = ""
     CreateSuperAdmin = ""
-
     Login = "Login"
-
-    Add = ""
+    AddBookRecord = ""
+    AddDigitalBook = ""
+    ChangePassword = ""
     Search = ""
+    Get = ""
 
 
 def Read(Client, BufferSize):
