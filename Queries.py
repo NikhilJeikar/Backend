@@ -354,6 +354,3 @@ def GetPendingRequests():
     Core.Cursor.execute(f"Select * from from  where Status = %s", (RequestStatus.processing,))
     return Core.Cursor.fetchall()
 
-
-def CheckBookIfExisis():
-    pass
