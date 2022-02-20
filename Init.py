@@ -8,7 +8,7 @@ def Pass(Client, Address):
 
 
 class Init:
-    def __init__(self, HostIP: str, Port: int = 24682, Devices: int = 100, Buffer: int = 1024 * 64):
+    def __init__(self, HostIP: str, Port: int = 24680, Devices: int = 100, Buffer: int = 1024 * 64):
         self.__IP = HostIP
         self.__Port = Port
         self.__Devices = Devices
@@ -19,21 +19,24 @@ class Init:
         self.RequestProcessing = Pass
         self.Database = None
         self.Cursor = None
-        self.__InitTCP()
         self.__InitDatabase()
+        self.__TCPThread = Thread(target=self.__InitTCP())
+        self.__TCPThread.start()
 
     def __InitDatabase(self):
         print("Initializing database")
-        self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="test123", port=3307)
+        self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="rootcore@123", port=3307)
         self.Cursor = self.Database.cursor(buffered=True)
         print("Database initialized")
 
     def __InitTCP(self):
+        print("TCP initializing")
         self._Socket = socket(AF_INET, SOCK_STREAM)
         self._Socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self._Socket.bind((self.__IP, self.__Port))
         self._Socket.listen(self.__Devices)
         self.__Status = True
+        print("TCP initialized")
         while True:
             Client, Address = self._Socket.accept()
             thread = Thread(target=self.RequestProcessing, args=(Client, Address))
