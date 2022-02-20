@@ -2,8 +2,11 @@ from azure.storage.blob import BlockBlobService
 from Constants import *
 
 
-def InitBlob(Name: str, Key: str):
-    return BlockBlobService(account_name=Name, account_key=Key)
+def InitStorage(Name: str, Key: str):
+    print("Storage link Initializing")
+    Object = BlockBlobService(account_name=Name, account_key=Key)
+    print("Storage link Initialized")
+    return Object
 
 
 def CreateContainer(Service: BlockBlobService, Name: str, Permission: BlobAccess):

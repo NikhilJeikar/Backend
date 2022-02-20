@@ -7,10 +7,6 @@ def Pass(Client, Address):
     pass
 
 
-def Dummy():
-    pass
-
-
 class Init:
     def __init__(self, HostIP: str, Port: int = 24680, Devices: int = 100, Buffer: int = 1024 * 64):
         self.__IP = HostIP
@@ -22,8 +18,8 @@ class Init:
         self.BufferSize = Buffer
         self.RequestProcessing = Pass
         self.Database = None
+        self.Storage = None
         self.Cursor = None
-        self.__CreateTables = Dummy
         self.__TCPThread = Thread(target=self.__InitTCP)
         self.__TCPThread.start()
         self.__InitDatabase()
@@ -34,7 +30,6 @@ class Init:
                                                 database="LibraryManagement")
         self.Cursor = self.Database.cursor(buffered=True)
         print("Database initialized")
-        self.__CreateTables()
 
     def __InitTCP(self):
         print("TCP initializing")
