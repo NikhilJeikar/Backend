@@ -107,7 +107,19 @@ def GetPrivilegeByUsername(Core: Init, Username: str):
         Core.Cursor.execute("SELECT Privilege FROM Credentials WHERE Username = %s;", (Username,))
         Data = Core.Cursor.fetchone()
         if Data is None:
-            return -1
+            return -2
+        else:
+            return Data[0]
+    except mysql.connector.Error as Error:
+        return -1
+
+
+def GetPasswordByUsername(Core: Init, Username: str):
+    try:
+        Core.Cursor.execute("SELECT Password FROM Credentials WHERE Username = %s;", (Username,))
+        Data = Core.Cursor.fetchone()
+        if Data is None:
+            return -2
         else:
             return Data[0]
     except mysql.connector.Error as Error:
@@ -119,7 +131,19 @@ def GetPrivilegeByID(Core: Init, ID: str):
         Core.Cursor.execute("SELECT Privilege FROM Credentials WHERE ID = %s;", (ID,))
         Data = Core.Cursor.fetchone()
         if Data is None:
-            return -1
+            return -2
+        else:
+            return Data[0]
+    except mysql.connector.Error as Error:
+        return -1
+
+
+def GetPasswordByID(Core: Init, ID: str):
+    try:
+        Core.Cursor.execute("SELECT Password FROM Credentials WHERE ID = %s;", (ID,))
+        Data = Core.Cursor.fetchone()
+        if Data is None:
+            return -2
         else:
             return Data[0]
     except mysql.connector.Error as Error:
@@ -128,10 +152,10 @@ def GetPrivilegeByID(Core: Init, ID: str):
 
 def GetUsername(Core: Init, ID: str):
     try:
-        Core.Cursor.execute("SELECT USername FROM Credentials WHERE ID = %s;", (ID,))
+        Core.Cursor.execute("SELECT Username FROM Credentials WHERE ID = %s;", (ID,))
         Data = Core.Cursor.fetchone()
         if Data is None:
-            return -1
+            return -2
         else:
             return Data[0]
     except mysql.connector.Error as Error:
@@ -240,8 +264,15 @@ def UpdateDigital(Core: Init, ISBN: str, Location: str):
 
 
 def GetDigital(Core: Init, ISBN: str):
-    Core.Cursor.execute("SELECT Location FROM DigitalBooks WHERE ISBN = %s;", (ISBN,))
-    return Core.Cursor.fetchone()[0]
+    try:
+        Core.Cursor.execute("SELECT Location FROM DigitalBooks WHERE ISBN = %s;", (ISBN,))
+        Data = Core.Cursor.fetchone()[0]
+        if Data is None:
+            return -2
+        else:
+            return Data[0]
+    except mysql.connector.Error as Error:
+        return -1
 
 
 # Update headlines
@@ -281,14 +312,22 @@ def UpdateLatestNewsCategory(Category: str):
             TargetedHeadlines[Category] = Data
 
 
-def GetNewsCategory(Category: str):
+def GetLatestNewsCategory(Category: str):
     UpdateLatestNewsCategory(Category)
     return TargetedHeadlines[Category]
 
 
-def GetLatestNewCategory():
+def GetLatestNewsCategoryUpdateTime(Category: str):
+    return TargetedHeadlinesUpdateTime[Category]
+
+
+def GetLatestNews():
     UpdateLatestNews()
     return Headlines
+
+
+def GetLatestNewsUpdateTime():
+    return UpdateTime
 
 
 # Acquisition
@@ -336,7 +375,7 @@ def GetPendingRequests(Core: Init):
     return Core.Cursor.fetchall()
 
 
-def CheckBookIfExisis(Core: Init, BookName: str):
+def CheckBookIfExist(Core: Init, BookName: str):
     Core.Cursor.execute("SELECT *  FROM BooksRecord WHERE BookName like %s;",
                         (BookName + "%",))
     st = Core.Cursor.fetchmany()

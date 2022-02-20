@@ -2,13 +2,7 @@ from azure.storage.blob import BlockBlobService
 from Constants import *
 
 
-def InitStorage(Name: str, Key: str):
-    print("Storage link Initializing")
-    Object = BlockBlobService(account_name=Name, account_key=Key)
-    print("Storage link Initialized")
-    return Object
-
-
+# Private calls
 def CreateContainer(Service: BlockBlobService, Name: str, Permission: BlobAccess):
     try:
         Service.create_container(Name.lower(), public_access=Permission)
@@ -38,3 +32,28 @@ def DeleteFile(Service: BlockBlobService, ContainerName: str, Filename: str):
     except:
         return False
 
+
+# Usable Calls
+def InitStorage(Name: str, Key: str):
+    print("Storage link Initializing")
+    Object = BlockBlobService(account_name=Name, account_key=Key)
+    print("Storage link Initialized")
+    return Object
+
+
+def StoreThumbnail(Service: BlockBlobService, Filename: str, Path: str):
+    CreateContainer(Service, "thumbnail", BlobAccess.PublicBlob)
+    UploadFile(Service, "thumbnail", Filename, Path)
+
+
+def GetThumbnailLink(Service: BlockBlobService, Filename: str):
+    return GetUrl(Service, "thumbnail", Filename)
+
+
+def StoreDigitalBooks(Service: BlockBlobService, Filename: str, Path: str):
+    CreateContainer(Service, "digitalbooks", BlobAccess.PublicBlob)
+    UploadFile(Service, "digitalbooks", Filename, Path)
+
+
+def GetDigitalBookslLink(Service: BlockBlobService, Filename: str):
+    return GetUrl(Service, "digitalbooks", Filename)

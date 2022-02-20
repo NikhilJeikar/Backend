@@ -16,8 +16,8 @@ def Read(Client, BufferSize):
             Size, Buffer = Buffer.split(Header.Split, maxsplit=1)
             Size = int(Size)
         if Size - len(Buffer) <= 0:
-            return Buffer
-    return Buffer
+            return Buffer.decode()
+    return Buffer.decode()
 
 
 def InitDatabase(Object: Init):
@@ -31,11 +31,11 @@ def RequestProcessing(Client, Address):
     global CoreObject
     Data = Read(Client, CoreObject.BufferSize)
     ID, Handler, Request = Data.split(Header.Split, maxsplit=2)
-    if Handler == Header.Adarsh:
+    if Handler == Header.Handler.Adarsh:
         Adrash(CoreObject, Client, ID, Request)
-    elif Handler == Header.Mugunth:
+    elif Handler == Header.Handler.Mugunth:
         Mugunth(CoreObject, Client, ID, Request)
-    elif Handler == Header.Nikhil:
+    elif Handler == Header.Handler.Nikhil:
         Nikhil(CoreObject, Client, ID, Request)
 
 
