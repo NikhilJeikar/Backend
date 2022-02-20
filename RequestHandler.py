@@ -25,3 +25,4 @@ def Read(Client, BufferSize):
             return Buffer
     return Buffer
 
+Core = Init("0.0.0.0")

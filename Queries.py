@@ -25,7 +25,6 @@ class RequestStatus(enum.Enum):
     declined = "DECLINED"
 
 
-Core = Init("0.0.0.0")
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
 UpdateTime = None
 Headlines = ""
@@ -46,7 +45,7 @@ TargetedHeadlinesUpdateTime = {"business": None,
 
 
 # Supporting queries
-def TableExist(Name: str):
+def TableExist(Core: Init, Name: str):
     Core.Cursor.execute("SHOW TABLES;")
     for x in Core.Cursor:
         if x[0] == Name:
@@ -54,23 +53,23 @@ def TableExist(Name: str):
     return False
 
 
-def DeleteTable(Name: str):
-    if TableExist(Name):
+def DeleteTable(Core: Init, Name: str):
+    if TableExist(Core, Name):
         Core.Cursor.execute(f"DROP TABLE {Name};")
         return True
     return False
 
 
 # User login queries
-def InitUserTable():
-    if not TableExist("Credentials"):
+def InitUserTable(Core: Init):
+    if not TableExist(Core, "Credentials"):
         Core.Cursor.execute("CREATE TABLE Credentials (Username VARCHAR(128) PRIMARY KEY, Password VARCHAR(128), "
                             "ID VARCHAR(512) UNIQUE , Privilege INT);")
         return True
     return False
 
 
-def AddUser(Username: str, Password: str, Permission: int):
+def AddUser(Core: Init, Username: str, Password: str, Permission: int):
     ID = hashlib.sha512(f"{Username}-"
                         f"{''.join(random.choices(string.ascii_uppercase + string.digits, k=10))}".encode()).hexdigest()
     try:
@@ -82,7 +81,7 @@ def AddUser(Username: str, Password: str, Permission: int):
         return False
 
 
-def RemoveUser(Username: str):
+def RemoveUser(Core: Init, Username: str):
     try:
         Core.Cursor.execute("DELETE FROM Credentials WHERE Username =  %s ;", (Username,))
         Core.Database.commit()
@@ -91,30 +90,30 @@ def RemoveUser(Username: str):
         return False
 
 
-def UpdateUser(Username: str, Password: str, Permission: int):
-    if AddUser(Username, Password, Permission):
+def UpdateUser(Core: Init, Username: str, Password: str, Permission: int):
+    if AddUser(Core, Username, Password, Permission):
         return True
     else:
-        if RemoveUser(Username) and AddUser(Username, Password, Permission):
+        if RemoveUser(Core, Username) and AddUser(Core, Username, Password, Permission):
             return True
         return False
 
 
-def IsUserUsername(Username: str):
+def IsUserUsername(Core: Init, Username: str):
     Core.Cursor.execute("SELECT COUNT(*) FROM Credentials WHERE Username = %s;", (Username,))
     if Core.Cursor.fetchone()[0] == 1:
         return True
     return False
 
 
-def IsUserID(ID: str):
+def IsUserID(Core: Init, ID: str):
     Core.Cursor.execute("SELECT COUNT(*) FROM Credentials WHERE ID = %s;", (ID,))
     if Core.Cursor.fetchone()[0] == 1:
         return True
     return False
 
 
-def AuthUser(Username: str, Password: str):
+def AuthUser(Core: Init, Username: str, Password: str):
     try:
         Core.Cursor.execute("SELECT ID FROM Credentials WHERE Username = %s and Password = %s;", (Username, Password))
         return Core.Cursor.fetchone()[0]
@@ -122,7 +121,7 @@ def AuthUser(Username: str, Password: str):
         return None
 
 
-def GetPrivilegeByUsername(Username: str):
+def GetPrivilegeByUsername(Core: Init, Username: str):
     try:
         Core.Cursor.execute("SELECT Privilege FROM Credentials WHERE Username = %s;", (Username,))
         Data = Core.Cursor.fetchone()
@@ -134,7 +133,7 @@ def GetPrivilegeByUsername(Username: str):
         return -1
 
 
-def GetPrivilegeByID(ID: str):
+def GetPrivilegeByID(Core: Init, ID: str):
     try:
         Core.Cursor.execute("SELECT Privilege FROM Credentials WHERE ID = %s;", (ID,))
         Data = Core.Cursor.fetchone()
@@ -146,7 +145,7 @@ def GetPrivilegeByID(ID: str):
         return -1
 
 
-def GetUsername(ID: str):
+def GetUsername(Core: Init, ID: str):
     try:
         Core.Cursor.execute("SELECT USername FROM Credentials WHERE ID = %s;", (ID,))
         Data = Core.Cursor.fetchone()
@@ -159,8 +158,8 @@ def GetUsername(ID: str):
 
 
 # Books related queries
-def InitBookDatabase():
-    if not TableExist("BooksRecord"):
+def InitBookDatabase(Core: Init):
+    if not TableExist(Core, "BooksRecord"):
         try:
             Core.Cursor.execute(
                 "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR(512) ,"
@@ -171,7 +170,7 @@ def InitBookDatabase():
     return False
 
 
-def AddBookRecord(Name: str, ISBN: str, Author: str, Availability: int, Type: int):
+def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int):
     try:
         Core.Cursor.execute(
             "INSERT INTO BooksRecord(BookName,ISBN,Author,Availability,TYPE ) VALUES (%s, %s,%s,%s,%s);",
@@ -182,16 +181,16 @@ def AddBookRecord(Name: str, ISBN: str, Author: str, Availability: int, Type: in
         return False
 
 
-def UpdateBookRecord(Name: str, ISBN: str, Author: str, Availability: int, Type: int):
-    if AddBookRecord(Name, ISBN, Author, Availability, Type):
+def UpdateBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int):
+    if AddBookRecord(Core, Name, ISBN, Author, Availability, Type):
         return True
     else:
-        if RemoveBookRecord(ISBN) and AddBookRecord(Name, ISBN, Author, Availability, Type):
+        if RemoveBookRecord(Core, ISBN) and AddBookRecord(Core, Name, ISBN, Author, Availability, Type):
             return True
         return False
 
 
-def RemoveBookRecord(ISBN: str):
+def RemoveBookRecord(Core: Init, ISBN: str):
     try:
         Core.Cursor.execute("DELETE FROM BooksRecord WHERE ISBN = %s;", (ISBN,))
         Core.Database.commit()
@@ -207,31 +206,31 @@ return First N values in [BookName,ISBN,Author,Availability,TYPE] this order
 """
 
 
-def SearchBookName(Name: str, N: int):
+def SearchBookName(Core: Init, Name: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE BookName like %s;",
                         (Name + "%",))
     return Core.Cursor.fetchmany(N)
 
 
-def SearchISBN(ISBN: str, N: int):
+def SearchISBN(Core: Init, ISBN: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE ISBN like %s;",
                         (ISBN + "%",))
     return Core.Cursor.fetchmany(N)
 
 
-def SearchAuthor(Author: str, N: int):
+def SearchAuthor(Core: Init, Author: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE Author like %s;",
                         (Author + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 # Digital books related queries
-def InitDigitalBookTable():
-    if not TableExist("DigitalBooks"):
+def InitDigitalBookTable(Core: Init):
+    if not TableExist(Core, "DigitalBooks"):
         Core.Cursor.execute("CREATE TABLE DigitalBooks (ISBN VARCHAR(512) PRIMARY KEY , Location VARCHAR(4096) );")
 
 
-def AddDigital(ISBN: str, Location: str):
+def AddDigital(Core: Init, ISBN: str, Location: str):
     try:
         Core.Cursor.execute("INSERT INTO DigitalBooks (ISBN , Location) VALUES (%s,%s);", (ISBN, Location))
         Core.Database.commit()
@@ -240,7 +239,7 @@ def AddDigital(ISBN: str, Location: str):
         return False
 
 
-def RemoveDigital(ISBN: str):
+def RemoveDigital(Core: Init, ISBN: str):
     try:
         Core.Cursor.execute("DELETE FROM DigitalBooks WHERE ISBN =  %s ;", (ISBN,))
         Core.Database.commit()
@@ -249,16 +248,16 @@ def RemoveDigital(ISBN: str):
         return False
 
 
-def UpdateDigital(ISBN: str, Location: str):
-    if AddDigital(ISBN, Location):
+def UpdateDigital(Core: Init, ISBN: str, Location: str):
+    if AddDigital(Core, ISBN, Location):
         return True
     else:
-        if RemoveDigital(ISBN) and AddDigital(ISBN, Location):
+        if RemoveDigital(Core, ISBN) and AddDigital(Core, ISBN, Location):
             return True
         return False
 
 
-def GetDigital(ISBN: str):
+def GetDigital(Core: Init, ISBN: str):
     Core.Cursor.execute("SELECT Location FROM DigitalBooks WHERE ISBN = %s;", (ISBN,))
     return Core.Cursor.fetchone()[0]
 
@@ -312,8 +311,8 @@ def GetLatestNewCategory():
 
 # Acquisition
 
-def InitBookRequests():
-    if not TableExist("RequestsRecord"):
+def InitBookRequests(Core: Init):
+    if not TableExist(Core, "RequestsRecord"):
         try:
             Core.Cursor.execute(
                 "CREATE TABLE RequestsRecord (RQNO VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR("
@@ -324,9 +323,9 @@ def InitBookRequests():
     return False
 
 
-def CreateNewRequest(Name: str, Author: str, RequestedBy: str, Status=RequestStatus.processing):
+def CreateNewRequest(Core: Init, Name: str, Author: str, RequestedBy: str, Status=RequestStatus.processing):
     try:
-        rqno = int(GetLastRecord()) + 1
+        rqno = int(GetLastRecord(Core)) + 1
         Core.Cursor.execute(
             "INSERT INTO RequestsRecord(BookName,RQNO,Author,RequestedBY,Status ) VALUES (%s, %s,%s,%s,%s);",
             (Name, rqno, Author, RequestedBy, Status))
@@ -336,12 +335,12 @@ def CreateNewRequest(Name: str, Author: str, RequestedBy: str, Status=RequestSta
         return False
 
 
-def GetLastRecord():
+def GetLastRecord(Core: Init):
     Core.Cursor.execute("Select Max(RQNO) from RequestsRecord")
     return Core.Cursor.fetchone()
 
 
-def UpdateRequestStatus(Status: RequestStatus, RQNO: int):
+def UpdateRequestStatus(Core: Init, Status: RequestStatus, RQNO: int):
     try:
         Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, RQNO))
         Core.Database.commit()
@@ -350,14 +349,15 @@ def UpdateRequestStatus(Status: RequestStatus, RQNO: int):
         return False
 
 
-def GetPendingRequests():
+def GetPendingRequests(Core: Init):
     Core.Cursor.execute("Select * from RequestsRecord where Status = %s", (RequestStatus.processing,))
     return Core.Cursor.fetchall()
 
-def CheckBookIfExisis(BookName: str):
+
+def CheckBookIfExisis(Core: Init, BookName: str):
     Core.Cursor.execute("SELECT *  FROM BooksRecord WHERE BookName like %s;",
                         (BookName + "%",))
-    st=Core.Cursor.fetchmany()
+    st = Core.Cursor.fetchmany()
     if len(st) == 0:
         return False
     else:
