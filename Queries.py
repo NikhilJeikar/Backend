@@ -343,7 +343,7 @@ def GetLastRecord():
 
 def UpdateRequestStatus(Status: RequestStatus, RQNO: int):
     try:
-        Core.Cursor.execute(f"UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, RQNO))
+        Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, RQNO))
         Core.Database.commit()
         return True
     except mysql.connector.Error as Error:
@@ -351,6 +351,14 @@ def UpdateRequestStatus(Status: RequestStatus, RQNO: int):
 
 
 def GetPendingRequests():
-    Core.Cursor.execute(f"Select * from from  where Status = %s", (RequestStatus.processing,))
+    Core.Cursor.execute("Select * from RequestsRecord where Status = %s", (RequestStatus.processing,))
     return Core.Cursor.fetchall()
 
+def CheckBookIfExisis(BookName: str):
+    Core.Cursor.execute("SELECT *  FROM BooksRecord WHERE BookName like %s;",
+                        (BookName + "%",))
+    st=Core.Cursor.fetchmany()
+    if len(st) == 0:
+        return False
+    else:
+        return True
