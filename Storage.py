@@ -1,10 +1,5 @@
-from azure.storage.blob import BlockBlobService, PublicAccess
-
-
-class BlobAccess:
-    Private = PublicAccess.OFF
-    PublicBlob = PublicAccess.Blob
-    PublicContainer = PublicAccess.Container
+from azure.storage.blob import BlockBlobService
+from Constants import *
 
 
 def InitBlob(Name: str, Key: str):

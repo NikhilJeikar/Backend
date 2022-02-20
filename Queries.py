@@ -5,28 +5,8 @@ import random
 import mysql.connector
 from newsapi.newsapi_client import NewsApiClient
 from datetime import datetime, timedelta
-import enum
+from Constants import *
 
-
-# Constants
-class Privileges:
-    SuperAdmin = 1
-    Admin = 2
-    User = 4
-
-
-class Type:
-    Online = 1
-    Offline = 2
-
-
-class RequestStatus(enum.Enum):
-    processing = "PROCESSING"
-    approved = "APPROVED"
-    declined = "DECLINED"
-
-
-NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
 UpdateTime = None
 Headlines = ""
 TargetedHeadlines = {"business": "",
@@ -209,7 +189,7 @@ return First N values in [BookName,ISBN,Thumbnail,Author,Availability,Type] this
 
 def SearchBookName(Core: Init, Name: str, N: int):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE BookName "
-                        "like %s;",(Name + "%",))
+                        "like %s;", (Name + "%",))
     return Core.Cursor.fetchmany(N)
 
 
@@ -220,8 +200,9 @@ def SearchISBN(Core: Init, ISBN: str, N: int):
 
 
 def SearchAuthor(Core: Init, Author: str, N: int):
-    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like %s;",
-                        (Author + "%",))
+    Core.Cursor.execute(
+        "SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like %s;",
+        (Author + "%",))
     return Core.Cursor.fetchmany(N)
 
 
