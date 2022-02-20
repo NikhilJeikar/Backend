@@ -24,3 +24,4 @@ def Read(Client, BufferSize):
         if Size - len(Buffer) <= 0:
             return Buffer
     return Buffer
+
