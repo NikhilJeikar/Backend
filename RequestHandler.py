@@ -1,8 +1,8 @@
 class Header:
     Split = "||"
-    CreateUser = ""
-    CreateAdmin = ""
-    CreateSuperAdmin = ""
+    CreateUser = "CREATE_USER"
+    CreateAdmin = "CREATE_ADMIN"
+    CreateSuperAdmin = "CREATE_SUPER_ADMIN"
     Login = "Login"
     AddBookRecord = ""
     AddDigitalBook = ""

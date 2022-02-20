@@ -18,7 +18,7 @@ class Type:
     Offline = 2
 
 
-Core = Init("10.0.0.6")
+Core = Init("0.0.0.0")
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
 UpdateTime = None
 Headlines = ""
