@@ -4,7 +4,7 @@ import string
 import random
 from newsapi import NewsApiClient
 from datetime import datetime, timedelta
-
+import enum
 
 # Constants
 class Privileges:
@@ -17,6 +17,10 @@ class Type:
     Online = 1
     Offline = 2
 
+class RequestStatus(enum.Enum):
+   processing = "PROCESSING"
+   approved = "APPROVED"
+   declined = "DECLINED"
 
 Core = Init("0.0.0.0")
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
@@ -270,3 +274,43 @@ def GetNewsCategory(Category: str):
 def GetLatestNewCategory():
     UpdateLatestNews()
     return Headlines
+
+#Acquisition
+
+def InitBookRequests():
+    if not TableExist("RequestsRecord"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE RequestsRecord (RQNO VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR(512) ,"
+                "RequestedBy VARCHAR(512) , Status VARCHAR(512) );")
+            return True
+        except mysql.connector.Error as Error:
+            return False
+    return False
+
+def CreateNewRequest(Name: str, Author: str, RequestedBy: str, Status=RequestStatus.processing):
+    try:
+        rqno=int(GetLastRecord())+1
+        Core.Cursor.execute("INSERT INTO RequestsRecord(BookName,RQNO,Author,RequestedBY,Status ) VALUES (%s, %s,%s,%s,%s);",(Name, rqno, Author, RequestedBy, Status))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error as Error:
+        return False
+
+def GetLastRecord():
+    Core.Cursor.execute("Select Max(RQNO) from RequestsRecord")
+    return Core.Cursor.fetchone()
+
+def UpdateRequestStatus(Status :RequestStatus , RQNO :int):
+    try:
+        Core.Cursor.execute(f"UPDATE RequestsRecord SET Status = %s where RQNO = %s",(Status,RQNO))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error as Error:
+        return False
+def GetPendingRequests():
+    Core.Cursor.execute(f"Select * from from  where Status = %s",(RequestStatus.processing))
+    return Core.Cursor.fetchall()
+
+def CheckBookIfExisis():
+    pass
