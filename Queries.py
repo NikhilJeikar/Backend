@@ -1,7 +1,8 @@
-from Init import *
+from Init import Init
 import hashlib
 import string
 import random
+import mysql.connector
 from newsapi.newsapi_client import NewsApiClient
 from datetime import datetime, timedelta
 import enum
@@ -162,30 +163,30 @@ def InitBookDatabase(Core: Init):
     if not TableExist(Core, "BooksRecord"):
         try:
             Core.Cursor.execute(
-                "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR(512) ,"
-                "Availability INTEGER , TYPE INTEGER );")
+                "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
+                ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
             return True
         except mysql.connector.Error as Error:
             return False
     return False
 
 
-def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int):
+def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
     try:
         Core.Cursor.execute(
-            "INSERT INTO BooksRecord(BookName,ISBN,Author,Availability,TYPE ) VALUES (%s, %s,%s,%s,%s);",
-            (Name, ISBN, Author, Availability, Type))
+            "INSERT INTO BooksRecord(BookName,ISBN,Thumbnail,Author,Availability,Type) VALUES (%s, %s,%s,%s,%s,%s);",
+            (Name, ISBN, Thumbnail, Author, Availability, Type))
         Core.Database.commit()
         return True
     except mysql.connector.Error as Error:
         return False
 
 
-def UpdateBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int):
-    if AddBookRecord(Core, Name, ISBN, Author, Availability, Type):
+def UpdateBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
+    if AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
         return True
     else:
-        if RemoveBookRecord(Core, ISBN) and AddBookRecord(Core, Name, ISBN, Author, Availability, Type):
+        if RemoveBookRecord(Core, ISBN) and AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
             return True
         return False
 
@@ -202,24 +203,24 @@ def RemoveBookRecord(Core: Init, ISBN: str):
 """
 Searches 
 param Key: [Name, ISBN, Author]
-return First N values in [BookName,ISBN,Author,Availability,TYPE] this order
+return First N values in [BookName,ISBN,Thumbnail,Author,Availability,Type] this order
 """
 
 
 def SearchBookName(Core: Init, Name: str, N: int):
-    Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE BookName like %s;",
-                        (Name + "%",))
+    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE BookName "
+                        "like %s;",(Name + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchISBN(Core: Init, ISBN: str, N: int):
-    Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE ISBN like %s;",
+    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE ISBN like %s;",
                         (ISBN + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchAuthor(Core: Init, Author: str, N: int):
-    Core.Cursor.execute("SELECT BookName,ISBN,Author,Availability,TYPE  FROM BooksRecord WHERE Author like %s;",
+    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like %s;",
                         (Author + "%",))
     return Core.Cursor.fetchmany(N)
 
