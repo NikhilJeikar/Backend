@@ -58,7 +58,7 @@ def AddUser(Core: Init, Username: str, Password: str, Permission: int):
                             (Username, Password, ID, Permission))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -67,7 +67,7 @@ def RemoveUser(Core: Init, Username: str):
         Core.Cursor.execute("DELETE FROM Credentials WHERE Username =  %s ;", (Username,))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -98,7 +98,7 @@ def AuthUser(Core: Init, Username: str, Password: str):
     try:
         Core.Cursor.execute("SELECT ID FROM Credentials WHERE Username = %s and Password = %s;", (Username, Password))
         return Core.Cursor.fetchone()[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return None
 
 
@@ -110,7 +110,7 @@ def GetPrivilegeByUsername(Core: Init, Username: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -122,7 +122,7 @@ def GetPasswordByUsername(Core: Init, Username: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -134,7 +134,7 @@ def GetPrivilegeByID(Core: Init, ID: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -146,7 +146,7 @@ def GetPasswordByID(Core: Init, ID: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -158,7 +158,7 @@ def GetUsername(Core: Init, ID: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -170,7 +170,7 @@ def InitBookDatabase(Core: Init):
                 "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
                 ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
             return True
-        except mysql.connector.Error as Error:
+        except mysql.connector.Error:
             return False
     return False
 
@@ -182,7 +182,7 @@ def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: i
             (Name, ISBN, Thumbnail, Author, Availability, Type))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -200,7 +200,7 @@ def RemoveBookRecord(Core: Init, ISBN: str):
         Core.Cursor.execute("DELETE FROM BooksRecord WHERE ISBN = %s;", (ISBN,))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -241,7 +241,7 @@ def AddDigital(Core: Init, ISBN: str, Location: str):
         Core.Cursor.execute("INSERT INTO DigitalBooks (ISBN , Location) VALUES (%s,%s);", (ISBN, Location))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -250,7 +250,7 @@ def RemoveDigital(Core: Init, ISBN: str):
         Core.Cursor.execute("DELETE FROM DigitalBooks WHERE ISBN =  %s ;", (ISBN,))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -271,7 +271,7 @@ def GetDigital(Core: Init, ISBN: str):
             return -2
         else:
             return Data[0]
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return -1
 
 
@@ -339,7 +339,7 @@ def InitBookRequests(Core: Init):
                 "CREATE TABLE RequestsRecord (RQNO VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR("
                 "512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) );")
             return True
-        except mysql.connector.Error as Error:
+        except mysql.connector.Error:
             return False
     return False
 
@@ -352,7 +352,7 @@ def CreateNewRequest(Core: Init, Name: str, Author: str, RequestedBy: str, Statu
             (Name, rqno, Author, RequestedBy, Status))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
@@ -366,7 +366,7 @@ def UpdateRequestStatus(Core: Init, Status: RequestStatus, RQNO: int):
         Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, RQNO))
         Core.Database.commit()
         return True
-    except mysql.connector.Error as Error:
+    except mysql.connector.Error:
         return False
 
 
