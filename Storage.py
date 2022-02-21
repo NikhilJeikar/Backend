@@ -44,6 +44,7 @@ def InitStorage(Name: str, Key: str):
 def StoreThumbnail(Service: BlockBlobService, Filename: str, Path: str):
     CreateContainer(Service, "thumbnail", BlobAccess.PublicBlob)
     UploadFile(Service, "thumbnail", Filename, Path)
+    return GetUrl(Service, "thumbnail", Filename)
 
 
 def GetThumbnailLink(Service: BlockBlobService, Filename: str):
@@ -53,7 +54,8 @@ def GetThumbnailLink(Service: BlockBlobService, Filename: str):
 def StoreDigitalBooks(Service: BlockBlobService, Filename: str, Path: str):
     CreateContainer(Service, "digitalbooks", BlobAccess.PublicBlob)
     UploadFile(Service, "digitalbooks", Filename, Path)
+    return GetUrl(Service, "digitalbooks", Filename)
 
 
-def GetDigitalBookslLink(Service: BlockBlobService, Filename: str):
+def GetDigitalBooksLink(Service: BlockBlobService, Filename: str):
     return GetUrl(Service, "digitalbooks", Filename)

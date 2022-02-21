@@ -21,6 +21,7 @@ class Error:
     Server = "Server"
     Unavailable = "Unavailable"
     Read = "Read"
+    InvalidRequest = "InvalidRequest"
     Exist = "Exists"
 
 
@@ -49,13 +50,15 @@ class Header:
         Users = "CreateUsers"
         Admins = "CreateAdmins"
 
-    class Change:
-        Password = "ChangePassword"
-        Permission = "ChangePermission"
+    class Update:
+        Password = "UpdatePassword"
+        Permission = "UpdatePermission"
+        BookRecord = "UpdateRecord"
+        DigitalBook = "UpdateDigitalBook"
 
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
-        Books = "FetchBooks"
+        BookRecord = "FetchBooks"
         News = "FetchNews"
 
     class Search:
@@ -78,7 +81,7 @@ class Header:
         DigitalBook = "UploadDigitalBook"
 
 
-class Type:
+class Avail:
     Online = 1
     Offline = 2
 

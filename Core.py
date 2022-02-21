@@ -34,7 +34,7 @@ def RequestProcessing(Client, Address):
     if Handler == Header.Handler.Adarsh:
         Adrash(CoreObject, Client, ID, Request)
     elif Handler == Header.Handler.Mugunth:
-        Mugunth(CoreObject, Client, ID, Request)
+        Mugunth(CoreObject, Client, ID)
     elif Handler == Header.Handler.Nikhil:
         Nikhil(CoreObject, Client, ID, Request)
 

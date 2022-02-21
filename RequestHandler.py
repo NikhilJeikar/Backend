@@ -1,16 +1,20 @@
 from Init import Init
 from Queries import *
-from Storage import StoreThumbnail,GetDigitalBookslLink,GetThumbnailLink,StoreDigitalBooks
+from Storage import StoreThumbnail, StoreDigitalBooks
 from Constants import *
 import pandas as pd
 from io import StringIO
-
-
+import os
 
 
 def Parser(Strings: list):
     Data = Header.Split.join(Strings)
     return f"{len(Data)}||{Data}".encode()
+
+
+def PDF2Thumbnail(path: str):
+    # Should return path of the image
+    return ""
 
 
 def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
@@ -88,7 +92,7 @@ def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
 
         else:
             Client.send(Parser([Header.Error, Error.Unauthorized]))
-    elif Base == Header.Change.Permission:
+    elif Base == Header.Update.Permission:
         if GetPrivilegeByID(CoreObject, ID) == Privileges.SuperAdmin:
             Username, Permission = Rem.split(sep=Header.Split)
             if Permission != Privileges.SuperAdmin:
@@ -100,11 +104,54 @@ def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
                 Client.send(Parser([Header.Failed, Failure.Exist]))
         else:
             Client.send(Parser([Header.Error, Error.Unauthorized]))
-    elif Base == Header.Change.Password:
+    elif Base == Header.Update.Password:
         if UpdateUser(CoreObject, GetUsername(CoreObject, ID), Rem, GetPrivilegeByID(CoreObject, ID)):
             Client.send(Parser([Header.Success]))
         else:
             Client.send(Parser([Header.Error, Error.Unauthorized]))
+    elif Base == Header.Update.BookRecord:
+        try:
+            Name, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            ISBN, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Author, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Availability, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Type, Rem = Rem.splitRem.split(sep=Header.Split, maxsplit=1)
+            Type = int(Type)
+            if Type & Avail.Online:
+                File = Rem.encode()
+                Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
+                Save.write(File)
+                Save.close()
+                Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
+                ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
+                if not UpdateBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
+                                        ThumbnailUrl) and not UpdateDigital(CoreObject, ISBN, FileUrl):
+                    RemoveDigital(CoreObject, ISBN)
+                    RemoveBookRecord(CoreObject, ISBN)
+                    Client.send(Parser([Header.Failed, Failure.Server]))
+                Client.send(Parser([Header.Success]))
+                try:
+                    os.remove("FilesCache/" + Thumbnail)
+                    os.remove("FilesCache/" + ISBN + ".pdf")
+                except FileNotFoundError:
+                    pass
+            else:
+                File = Rem.encode()
+                Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                Save.write(File)
+                Save.close()
+                ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg", "FilesCache/" + ISBN + ".jpeg")
+                if not UpdateBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
+                                        ThumbnailUrl):
+                    Client.send(Parser([Header.Failed, Failure.Server]))
+                Client.send(Parser([Header.Success]))
+                try:
+                    os.remove("FilesCache/" + ISBN + ".jpeg")
+                except FileNotFoundError:
+                    pass
+        except:
+            return Client.send(Parser([Header.Error, Error.InvalidRequest]))
     elif Base == Header.Fetch.DigitalBooks:
         Out = GetDigital(CoreObject, Rem)
         if Out == -1:
@@ -139,18 +186,67 @@ def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
                                 GetLatestNewsCategoryUpdateTime(Header.Categories.Technology)]))
         else:
             Client.send(Parser([Header.Error, Error.Unknown]))
+    elif Base == Header.Fetch.BookRecord:
+        Client.send(Parser([SearchISBN(CoreObject, Rem, 1)[0]]))
     elif Base == Header.Search.Books:
-        pass
+        Name = SearchBookName(CoreObject, Rem, 10)
+        ISBN = SearchISBN(CoreObject, Rem, 5)
+        Author = SearchAuthor(CoreObject, Rem, 5)
+        Sequence = ["BookName", "ISBN", "Thumbnail", "Author", "Availability", "Type"]
+        Data = [len(Sequence)]
+        Data.extend(Sequence)
+        Data.extend(Author)
+        Data.extend(Name)
+        Data.extend(ISBN)
+        Client.send(Parser(Data))
     elif Base == Header.Add.BookRecord:
-        pass
-    elif Base == Header.Upload.DigitalBook:
-        Name, File = Rem.split(sep=Header.Split, maxsplit=1)
-        Save = open("FilesCache/" + Name, 'wb')
-        Save.write(File.encode())
-        Save.close()
+        try:
+            Name, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            ISBN, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Author, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Availability, Rem = Rem.split(sep=Header.Split, maxsplit=1)
+            Type, Rem = Rem.splitRem.split(sep=Header.Split, maxsplit=1)
+            Type = int(Type)
+            if Type & Avail.Online:
+                File = Rem.encode()
+                Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
+                Save.write(File)
+                Save.close()
+                Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
+                ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
+                if not AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
+                                     ThumbnailUrl) and not AddDigital(CoreObject, ISBN, FileUrl):
+                    RemoveDigital(CoreObject, ISBN)
+                    RemoveBookRecord(CoreObject, ISBN)
+                    Client.send(Parser([Header.Failed, Failure.Server]))
+                Client.send(Parser([Header.Success]))
+                try:
+                    os.remove("FilesCache/" + Thumbnail)
+                    os.remove("FilesCache/" + ISBN + ".pdf")
+                except FileNotFoundError:
+                    pass
+            else:
+                File = Rem.encode()
+                Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                Save.write(File)
+                Save.close()
+                ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg", "FilesCache/" + ISBN + ".jpeg")
+                if not AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
+                                     ThumbnailUrl):
+                    Client.send(Parser([Header.Failed, Failure.Server]))
+                Client.send(Parser([Header.Success]))
+                try:
+                    os.remove("FilesCache/" + ISBN + ".jpeg")
+                except FileNotFoundError:
+                    pass
+        except:
+            return Client.send(Parser([Header.Error, Error.InvalidRequest]))
+    else:
+        return Client.send(Parser([Header.Error, Error.InvalidRequest]))
 
 
-def Mugunth(Core: Init, Client, ID: str, Command: str):
+def Mugunth(Core: Init, Client, ID: str):
     pass
 
 
