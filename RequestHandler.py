@@ -9,7 +9,7 @@ import os
 
 def Parser(Strings: list):
     Data = Header.Split.join(Strings)
-    return f"{len(Data)}||{Data}".encode()
+    return f"{len(Data)}{Header.Split}{Data}".encode()
 
 
 def PDF2Thumbnail(path: str):

@@ -59,3 +59,13 @@ def StoreDigitalBooks(Service: BlockBlobService, Filename: str, Path: str):
 
 def GetDigitalBooksLink(Service: BlockBlobService, Filename: str):
     return GetUrl(Service, "digitalbooks", Filename)
+
+
+def StoreDigitalMagazine(Service: BlockBlobService, Filename: str, Path: str):
+    CreateContainer(Service, "digitalmagazine", BlobAccess.PublicBlob)
+    UploadFile(Service, "digitalmagazine", Filename, Path)
+    return GetUrl(Service, "digitalmagazine", Filename)
+
+
+def GetDigitalMagazineLink(Service: BlockBlobService, Filename: str):
+    return GetUrl(Service, "digitalmagazine", Filename)

@@ -15,6 +15,17 @@ class Privileges:
     User = 4
 
 
+class Avail:
+    Online = 1
+    Offline = 2
+
+
+class RequestStatus(enum.Enum):
+    processing = "PROCESSING"
+    approved = "APPROVED"
+    declined = "DECLINED"
+
+
 class Error:
     Unauthorized = "Unauthorized"
     Unknown = "Unknown"
@@ -79,17 +90,6 @@ class Header:
 
     class Upload:
         DigitalBook = "UploadDigitalBook"
-
-
-class Avail:
-    Online = 1
-    Offline = 2
-
-
-class RequestStatus(enum.Enum):
-    processing = "PROCESSING"
-    approved = "APPROVED"
-    declined = "DECLINED"
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
