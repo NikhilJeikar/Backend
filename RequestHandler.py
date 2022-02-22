@@ -1,3 +1,4 @@
+from typing import List
 from Init import Init
 from Queries import *
 from Storage import StoreThumbnail, StoreDigitalBooks
@@ -12,12 +13,20 @@ def Parser(Strings: list):
     return f"{len(Data)}{Header.Split}{Data}".encode()
 
 
-def PDF2Thumbnail(path: str):
+def FetchManyParser(Data: List[tuple]):
+    Temp = []
+    for i in Data:
+        _ = Header.Split.join(i)
+        Temp.append(_)
+    return [Header.Split.join(Temp)]
+
+
+def PDF2Thumbnail(Path: str):
     # Should return path of the image
     return ""
 
 
-def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
+def Nikhil(CoreObject: Init, Client, ID: str, Command: str, Path: str = None):
     Base, Rem = Command.split(sep=Header.Split, maxsplit=1)
     if Base == Header.Login:
         Username, Password = Rem.split(sep=Header.Split)
@@ -246,9 +255,9 @@ def Nikhil(CoreObject: Init, Client, ID: str, Command: str):
         return Client.send(Parser([Header.Error, Error.InvalidRequest]))
 
 
-def Mugunth(Core: Init, Client, ID: str):
+def Mugunth(CoreObject: Init, Client, ID: str, Command: str, Path: str = None):
     pass
 
 
-def Adrash(Core: Init, Client, ID: str, Command: str):
+def Adrash(Core: Init, Client, ID: str, Command: str, Path: str = None):
     pass

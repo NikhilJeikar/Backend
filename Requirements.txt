@@ -1,7 +1,11 @@
+websockets==10.2
+
 mysql-connector-python==8.0.28
+
 pycountry==22.1.10
 newsapi==0.1.1
 newsapi-python==0.2.6
 
 azure==4.0.0
+
 pandas==1.4.1
