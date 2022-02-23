@@ -1,7 +1,11 @@
+import hashlib
+
+import Queries
 from Init import Init
 from Constants import *
-from RequestHandler import Adrash, Nikhil, Mugunth
-from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests
+from RequestHandler import AdrashWebHandler, AdrashTCPHandler, NikhilTCPHandler, NikhilWebHandler, MugunthWebHandler, \
+    MugunthTCPHandler
+from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser
 from Storage import InitStorage
 
 
@@ -34,11 +38,11 @@ def TCPRequestProcessing(Client, Address):
     print("TCP", Data)
     ID, Handler, Request = Data.split(Header.Split, maxsplit=2)
     if Handler == Header.Handler.Adarsh:
-        Adrash(CoreObject, Client, ID, Request)
+        AdrashTCPHandler(CoreObject, Client, ID, Request)
     elif Handler == Header.Handler.Mugunth:
-        Mugunth(CoreObject, Client, ID, Request)
+        MugunthTCPHandler(CoreObject, Client, ID, Request)
     elif Handler == Header.Handler.Nikhil:
-        Nikhil(CoreObject, Client, ID, Request)
+        NikhilTCPHandler(CoreObject, Client, ID, Request)
 
 
 class WebHandler:
@@ -46,6 +50,7 @@ class WebHandler:
         self.__WebSocket = WebSocket
 
     async def send(self, Data):
+        print(Data.decode())
         await self.__WebSocket.send(Data.decode())
 
 
@@ -55,17 +60,25 @@ async def WebRequestProcessing(WebSocket, Path):
     Client = WebHandler(WebSocket)
     Size, ID, Handler, Request = Data.split(Header.Split, maxsplit=3)
     if Handler == Header.Handler.Adarsh:
-        Adrash(CoreObject, Client, ID, Request, Path)
+        await AdrashWebHandler(CoreObject, Client, ID, Request, Path)
     elif Handler == Header.Handler.Mugunth:
-        Mugunth(CoreObject, Client, ID, Request, Path)
+        await MugunthWebHandler(CoreObject, Client, ID, Request, Path)
     elif Handler == Header.Handler.Nikhil:
-        Nikhil(CoreObject, Client, ID, Request, Path)
+        await NikhilWebHandler(CoreObject, Client, ID, Request, Path)
+    print("Done")
 
 
 CoreObject = Init(IP, WebPort, TCPPort)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
 CoreObject.WebRequestProcessing = WebRequestProcessing
-CoreObject.Start()
 InitDatabase(CoreObject)
+# AddUser(CoreObject, hashlib.sha512("Nikhil".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.SuperAdmin)
+# AddUser(CoreObject, hashlib.sha512("Admin".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.Admin)
+# AddUser(CoreObject, hashlib.sha512("User".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
 StorageObject = InitStorage(StorageName, StorageKey)
 CoreObject.Storage = StorageObject
+CoreObject.Start()
+

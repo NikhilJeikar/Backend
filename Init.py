@@ -2,6 +2,7 @@ from socket import *
 import mysql.connector
 from Thread import Thread
 import asyncio
+import ssl
 import websockets
 
 
@@ -27,9 +28,9 @@ class Init:
         self.Storage = None
         self.Cursor = None
         self.__WebSocket = None
+        self.__InitDatabase()
 
     def Start(self):
-        self.__InitDatabase()
         self.__TCPThread = Thread(target=self.__InitTCP)
         self.__TCPThread.start()
         self.__InitWebSocket()
@@ -57,6 +58,10 @@ class Init:
 
     def __InitWebSocket(self):
         print("Websocket initializing")
+        # ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        # ssl_context.load_cert_chain("cert.pem", "cert.pem")
+        # self.__WebSocket = websockets.serve(self.WebRequestProcessing, self.__IP, self.__WebPort, max_size=9000000,
+        #                                     ssl=ssl_context)
         self.__WebSocket = websockets.serve(self.WebRequestProcessing, self.__IP, self.__WebPort)
         print("Websocket initialized")
         asyncio.get_event_loop().run_until_complete(self.__WebSocket)

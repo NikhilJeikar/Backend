@@ -1,3 +1,5 @@
+import json
+
 from Init import Init
 import hashlib
 import string
@@ -97,7 +99,11 @@ def IsUserID(Core: Init, ID: str):
 def AuthUser(Core: Init, Username: str, Password: str):
     try:
         Core.Cursor.execute("SELECT ID FROM Credentials WHERE Username = %s and Password = %s;", (Username, Password))
-        return Core.Cursor.fetchone()[0]
+        Data = Core.Cursor.fetchone()
+        if Data is None:
+            return None
+        else:
+            return Data[0]
     except mysql.connector.Error:
         return None
 
@@ -277,11 +283,17 @@ def GetDigital(Core: Init, ISBN: str):
 
 # Update headlines
 def UpdateLatestNews():
+    def Parser(Strings: list):
+        print(Strings)
+        Data = Header.Split.join(Strings)
+        return f"{len(Data)}{Header.Split}{Data}".encode()
+
     global UpdateTime, Headlines
     newsapi = NewsApiClient(api_key=NewsAPIClientKey)
     if UpdateTime is None or UpdateTime - datetime.now() > timedelta(minutes=30):
-        Headlines = newsapi.get_top_headlines()
+        Headlines = newsapi.get_top_headlines(language='en', page_size=100)
         if Headlines["status"] == "ok":
+            Headlines = json.dumps(Headlines)
             UpdateTime = datetime.now()
             return True
         else:
@@ -295,10 +307,10 @@ def UpdateAllLatestNewsCategory():
     for key in TargetedHeadlines.keys():
         if TargetedHeadlinesUpdateTime[key] is None or TargetedHeadlinesUpdateTime[key] - datetime.now() > timedelta(
                 minutes=30):
-            Data = newsapi.get_top_headlines(category=key)
+            Data = newsapi.get_top_headlines(category=key, language='en', page_size=100)
             if Data["status"] == "ok":
                 TargetedHeadlinesUpdateTime[key] = datetime.now()
-                TargetedHeadlines[key] = Data
+                TargetedHeadlines[key] = json.dumps(Data)
 
 
 def UpdateLatestNewsCategory(Category: str):
@@ -306,10 +318,10 @@ def UpdateLatestNewsCategory(Category: str):
     newsapi = NewsApiClient(api_key=NewsAPIClientKey)
     if TargetedHeadlinesUpdateTime[Category] is None or \
             TargetedHeadlinesUpdateTime[Category] - datetime.now() > timedelta(minutes=30):
-        Data = newsapi.get_top_headlines(category=Category)
+        Data = newsapi.get_top_headlines(category=Category, language='en', page_size=100)
         if Data["status"] == "ok":
             TargetedHeadlinesUpdateTime[Category] = datetime.now()
-            TargetedHeadlines[Category] = Data
+            TargetedHeadlines[Category] = json.dumps(Data)
 
 
 def GetLatestNewsCategory(Category: str):
@@ -318,7 +330,7 @@ def GetLatestNewsCategory(Category: str):
 
 
 def GetLatestNewsCategoryUpdateTime(Category: str):
-    return TargetedHeadlinesUpdateTime[Category]
+    return TargetedHeadlinesUpdateTime[Category].strftime("%m/%d/%Y, %H:%M:%S")
 
 
 def GetLatestNews():
@@ -327,7 +339,7 @@ def GetLatestNews():
 
 
 def GetLatestNewsUpdateTime():
-    return UpdateTime
+    return UpdateTime.strftime("%m/%d/%Y, %H:%M")
 
 
 # Acquisition
