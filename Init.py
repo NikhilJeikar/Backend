@@ -1,6 +1,7 @@
 from socket import *
 import mysql.connector
 from Thread import Thread
+from Constants import DatabaseHost,DatabasePort,DatabaseUser,DatabasePassword
 import asyncio
 import ssl
 import websockets
@@ -37,8 +38,8 @@ class Init:
 
     def __InitDatabase(self):
         print("Initializing database")
-        self.Database = mysql.connector.connect(host="127.0.0.1", user="root", password="rootcore@123", port=3307,
-                                                database="LibraryManagement")
+        self.Database = mysql.connector.connect(host=DatabaseHost, user=DatabaseUser, password=DatabasePassword,
+                                                port=DatabasePort, database="LibraryManagement")
         self.Cursor = self.Database.cursor(buffered=True)
         print("Database initialized")
 

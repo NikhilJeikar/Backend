@@ -45,7 +45,7 @@ def DeleteTable(Core: Init, Name: str):
 
 # User login queries
 def InitUserTable(Core: Init):
-    if not TableExist(Core, "Credentials"):
+    if not TableExist(Core, "credentials"):
         Core.Cursor.execute("CREATE TABLE Credentials (Username VARCHAR(128) PRIMARY KEY, Password VARCHAR(128), "
                             "ID VARCHAR(512) UNIQUE , Privilege INT);")
         return True
@@ -170,7 +170,7 @@ def GetUsername(Core: Init, ID: str):
 
 # Books related queries
 def InitBookDatabase(Core: Init):
-    if not TableExist(Core, "BooksRecord"):
+    if not TableExist(Core, "booksrecord"):
         try:
             Core.Cursor.execute(
                 "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
@@ -238,7 +238,7 @@ def SearchAuthor(Core: Init, Author: str, N: int):
 
 # Digital books related queries
 def InitDigitalBookTable(Core: Init):
-    if not TableExist(Core, "DigitalBooks"):
+    if not TableExist(Core, "digitalbooks"):
         Core.Cursor.execute("CREATE TABLE DigitalBooks (ISBN VARCHAR(512) PRIMARY KEY , Location VARCHAR(4096) );")
 
 
@@ -345,7 +345,7 @@ def GetLatestNewsUpdateTime():
 # Acquisition
 
 def InitBookRequests(Core: Init):
-    if not TableExist(Core, "RequestsRecord"):
+    if not TableExist(Core, "requestsrecord"):
         try:
             Core.Cursor.execute(
                 "CREATE TABLE RequestsRecord (RQNO VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR("
