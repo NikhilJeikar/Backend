@@ -72,12 +72,12 @@ CoreObject = Init(IP, WebPort, TCPPort)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
 CoreObject.WebRequestProcessing = WebRequestProcessing
 InitDatabase(CoreObject)
-# AddUser(CoreObject, hashlib.sha512("Nikhil".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.SuperAdmin)
-# AddUser(CoreObject, hashlib.sha512("Admin".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.Admin)
-# AddUser(CoreObject, hashlib.sha512("User".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.User)
+AddUser(CoreObject, hashlib.sha512("Nikhil".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+        Privileges.SuperAdmin)
+AddUser(CoreObject, hashlib.sha512("Admin".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+        Privileges.Admin)
+AddUser(CoreObject, hashlib.sha512("User".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+        Privileges.User)
 StorageObject = InitStorage(StorageName, StorageKey)
 CoreObject.Storage = StorageObject
 CoreObject.Start()

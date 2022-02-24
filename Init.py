@@ -1,7 +1,7 @@
 from socket import *
 import mysql.connector
 from Thread import Thread
-from Constants import DatabaseHost,DatabasePort,DatabaseUser,DatabasePassword
+from Constants import DatabaseHost, DatabasePort, DatabaseUser, DatabasePassword
 import asyncio
 import ssl
 import websockets
