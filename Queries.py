@@ -45,7 +45,7 @@ def DeleteTable(Core: Init, Name: str):
 
 # User login queries
 def InitUserTable(Core: Init):
-    if not TableExist(Core, "credentials"):
+    if not TableExist(Core, "Credentials"):
         Core.Cursor.execute("CREATE TABLE Credentials (Username VARCHAR(128) PRIMARY KEY, Password VARCHAR(128), "
                             "ID VARCHAR(512) UNIQUE , Privilege INT);")
         return True
@@ -395,3 +395,4 @@ def CheckBookIfExist(Core: Init, BookName: str):
         return False
     else:
         return True
+

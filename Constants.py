@@ -100,7 +100,8 @@ IP = "0.0.0.0"
 TCPPort = 24680
 WebPort = 13579
 
-DatabaseUser = "rootuser@digital-library"
+DatabaseUser = "root"
 DatabasePassword = "rootcore@123"
-DatabaseHost = "digital-library.mysql.database.azure.com"
+DatabaseHost = "127.0.0.1"
 DatabasePort = 3306
+
