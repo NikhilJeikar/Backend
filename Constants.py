@@ -74,6 +74,9 @@ class Header:
 
     class Search:
         Books = "SearchBooks"
+        BookName = "SearchBookName"
+        BookISBN = "SearchBookISBN"
+        BookAuthor = "SearchAuthor"
 
     class Categories:
         All = "all"

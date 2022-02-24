@@ -430,15 +430,37 @@ def NikhilTCPHandler(CoreObject: Init, Client, ID: str, Command: str, Path: str 
     elif Base == Header.Fetch.BookRecord:
         Client.send(Parser([SearchISBN(CoreObject, Rem, 1)[0]]))
     elif Base == Header.Search.Books:
-        Name = SearchBookName(CoreObject, Rem, 10)
-        ISBN = SearchISBN(CoreObject, Rem, 5)
-        Author = SearchAuthor(CoreObject, Rem, 5)
+        Name = FetchManyParser(SearchBookName(CoreObject, Rem, 10))
+        ISBN = FetchManyParser(SearchISBN(CoreObject, Rem, 5))
+        Author = FetchManyParser(SearchAuthor(CoreObject, Rem, 5))
         Sequence = ["BookName", "ISBN", "Thumbnail", "Author", "Availability", "Type"]
         Data = [len(Sequence)]
         Data.extend(Sequence)
-        Data.extend(Author)
-        Data.extend(Name)
-        Data.extend(ISBN)
+        Data.append(Author)
+        Data.append(Name)
+        Data.append(ISBN)
+        Client.send(Parser(Data))
+    elif Base == Header.Search.BookAuthor:
+        Author = SearchAuthor(CoreObject, Rem, 20)
+        Author = FetchManyParser(Author)
+        Sequence = ["BookName", "ISBN", "Thumbnail", "Author", "Availability", "Type"]
+        Data = [len(Sequence)]
+        Data.extend(Sequence)
+        Data.append(Author)
+        Client.send(Parser(Data))
+    elif Base == Header.Search.BookISBN:
+        ISBN = FetchManyParser(SearchISBN(CoreObject, Rem, 20))
+        Sequence = ["BookName", "ISBN", "Thumbnail", "Author", "Availability", "Type"]
+        Data = [len(Sequence)]
+        Data.extend(Sequence)
+        Data.append(ISBN)
+        Client.send(Parser(Data))
+    elif Base == Header.Search.BookName:
+        Name = FetchManyParser(SearchBookName(CoreObject, Rem, 20))
+        Sequence = ["BookName", "ISBN", "Thumbnail", "Author", "Availability", "Type"]
+        Data = [len(Sequence)]
+        Data.extend(Sequence)
+        Data.append(Name)
         Client.send(Parser(Data))
     elif Base == Header.Add.BookRecord:
         try:
