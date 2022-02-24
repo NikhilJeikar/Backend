@@ -8,6 +8,6 @@ services:
       MYSQL_DATABASE: LibraryManagement 
       MYSQL_USER: User1
       MYSQL_PASSWORD: basecase
-      MYSQL_TCP_PORT: 3307
+      MYSQL_TCP_PORT: 3306
     ports:
-      - "3307:3307"
+      - "3306:3306"

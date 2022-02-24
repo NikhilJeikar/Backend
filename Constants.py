@@ -103,5 +103,4 @@ WebPort = 13579
 DatabaseUser = "root"
 DatabasePassword = "rootcore@123"
 DatabaseHost = "127.0.0.1"
-DatabasePort = 3306
-
+DatabasePort = 3307
