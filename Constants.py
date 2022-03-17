@@ -26,18 +26,20 @@ class RequestStatus(enum.Enum):
     declined = "DECLINED"
 
 
+class BookParams:
+    ISBN = "ISBN"
+    Name = "Name"
+    Author = "Author"
+    Type = "Type"
+
+
 class Error:
-    Unauthorized = "Unauthorized"
+    Breach = "Breach"
     Unknown = "Unknown"
-    Server = "Server"
-    Unavailable = "Unavailable"
-    Read = "Read"
-    InvalidRequest = "InvalidRequest"
-    Exist = "Exists"
 
 
 class Failure:
-    Unavailable = "Unavailable"
+    Credentials = "Credentials"
     Exist = "Exists"
     Server = "Server"
 
@@ -45,7 +47,6 @@ class Failure:
 class Header:
     Split = "||"
     Error = "Error"
-    Ack = "Ack"
     Success = "Success"
     Failed = "Failed"
     Login = "Login"
@@ -62,9 +63,7 @@ class Header:
 
     class Update:
         Password = "UpdatePassword"
-        Permission = "UpdatePermission"
         BookRecord = "UpdateRecord"
-        DigitalBook = "UpdateDigitalBook"
 
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
@@ -73,12 +72,8 @@ class Header:
 
     class Search:
         Books = "SearchBooks"
-        BookName = "SearchBookName"
-        BookISBN = "SearchBookISBN"
-        BookAuthor = "SearchAuthor"
 
     class Categories:
-        All = "all"
         Business = "business"
         Entertainment = "entertainment"
         General = "general"
@@ -89,9 +84,6 @@ class Header:
 
     class Add:
         BookRecord = "AddBookRecord"
-
-    class Upload:
-        DigitalBook = "UploadDigitalBook"
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"

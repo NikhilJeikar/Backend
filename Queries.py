@@ -217,22 +217,23 @@ return First N values in [BookName,ISBN,Thumbnail,Author,Availability,Type] this
 """
 
 
-def SearchBookName(Core: Init, Name: str, N: int):
+def SearchBookName(Core: Init, Name: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE BookName "
-                        "like %s;", (Name + "%",))
+                        "like %s ORDER  BY ISBN %s;", (Name + "%", Sort))
     return Core.Cursor.fetchmany(N)
 
 
-def SearchISBN(Core: Init, ISBN: str, N: int):
-    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE ISBN like %s;",
-                        (ISBN + "%",))
+def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
+    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE ISBN like %s "
+                        "ORDER  BY ISBN %s;",
+                        (ISBN + "%", Sort))
     return Core.Cursor.fetchmany(N)
 
 
-def SearchAuthor(Core: Init, Author: str, N: int):
-    Core.Cursor.execute(
-        "SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like %s;",
-        (Author + "%",))
+def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
+    Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like "
+                        "%s ORDER  BY ISBN %s;",
+        (Author + "%", Sort))
     return Core.Cursor.fetchmany(N)
 
 
@@ -395,4 +396,3 @@ def CheckBookIfExist(Core: Init, BookName: str):
         return False
     else:
         return True
-

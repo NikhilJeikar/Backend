@@ -1,11 +1,12 @@
 import hashlib
+import json
 import string
 import random
 
 import Queries
 from Init import Init
 from Constants import *
-from RequestHandler import Handler1WebHandler, Handler1TCPHandler, Handler0TCPHandler, Handler0WebHandler
+from RequestHandler import WebHandler,TCPHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord
 from Storage import InitStorage
 
@@ -37,14 +38,14 @@ def TCPRequestProcessing(Client, Address):
     print(f"{Address} Connected")
     Data = Read(Client, CoreObject.BufferSize)
     print("TCP", Data)
-    ID, Handler, Request = Data.split(Header.Split, maxsplit=2)
+    ID, Data = Data.split(Header.Split, maxsplit=1)
+    Data = json.load(Data)
+    Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
-        Handler1TCPHandler(CoreObject, Client, ID, Request)
-    elif Handler == Header.Handler.Handler0:
-        Handler0TCPHandler(CoreObject, Client, ID, Request)
+        TCPHandler(CoreObject, Client, Data)
 
 
-class WebHandler:
+class WebSocketHandler:
     def __init__(self, WebSocket):
         self.__WebSocket = WebSocket
 
@@ -56,12 +57,12 @@ class WebHandler:
 async def WebRequestProcessing(WebSocket, Path):
     Data = await WebSocket.recv()
     print("Websocket", Data)
-    Client = WebHandler(WebSocket)
-    Size, ID, Handler, Request = Data.split(Header.Split, maxsplit=3)
+    Client = WebSocketHandler(WebSocket)
+    Size, Data = Data.split(Header.Split, maxsplit=1)
+    Data = json.load(Data)
+    Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
-        await Handler1WebHandler(CoreObject, Client, ID, Request, Path)
-    elif Handler == Header.Handler.Handler0:
-        await Handler0WebHandler(CoreObject, Client, ID, Request, Path)
+        await WebHandler(CoreObject, Client, Data)
     print("Done")
 
 
@@ -82,6 +83,7 @@ InitDatabase(CoreObject)
 #                                                                   string.digits, k=7)),
 #                   ''.join(random.choices(string.ascii_uppercase +
 #                                          string.digits, k=7)), random.randint(1, 100), random.randint(1, 3), "")
+
 StorageObject = InitStorage(StorageName, StorageKey)
 CoreObject.Storage = StorageObject
 CoreObject.Start()
