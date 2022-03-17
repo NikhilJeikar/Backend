@@ -3,7 +3,6 @@ import json
 import string
 import random
 
-import Queries
 from Init import Init
 from Constants import *
 from RequestHandler import WebHandler,TCPHandler

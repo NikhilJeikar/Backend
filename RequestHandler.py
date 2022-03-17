@@ -1,4 +1,3 @@
-from Init import Init
 from DataGenerator import *
 from Queries import *
 from Storage import StoreThumbnail, StoreDigitalBooks

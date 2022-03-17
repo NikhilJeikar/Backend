@@ -36,6 +36,7 @@ class BookParams:
 class Error:
     Breach = "Breach"
     Unknown = "Unknown"
+    Unavailable = "Unavailable"
 
 
 class Failure:
