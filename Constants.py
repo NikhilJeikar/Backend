@@ -51,9 +51,8 @@ class Header:
     Login = "Login"
 
     class Handler:
-        Adarsh = "Adarsh"
-        Mugunth = "Mugunth"
-        Nikhil = "Nikhil"
+        Handler1 = "Adarsh"
+        Handler0 = "Nikhil"
 
     class Create:
         User = "CreateUser"
