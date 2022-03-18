@@ -20,7 +20,7 @@ class Avail:
     Offline = 2
 
 
-class RequestStatus(enum.Enum):
+class RequestStatus:
     processing = "PROCESSING"
     approved = "APPROVED"
     declined = "DECLINED"
@@ -52,24 +52,21 @@ class Header:
     Failed = "Failed"
     Login = "Login"
 
-    class Handler:
-        Handler1 = "Adarsh"
-        Handler0 = "Nikhil"
-
     class Create:
         User = "CreateUser"
         Admin = "CreateAdmin"
-        Users = "CreateUsers"
-        Admins = "CreateAdmins"
 
     class Update:
         Password = "UpdatePassword"
         BookRecord = "UpdateRecord"
+        BookRequest = "UpdateBookRequestStatus"
 
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
         BookRecord = "FetchBooks"
         News = "FetchNews"
+        BookRequest = "FetchBookRequest"
+        BookRequestStatus = "FetchBookRequestStatus"
 
     class Search:
         Books = "SearchBooks"
@@ -85,6 +82,7 @@ class Header:
 
     class Add:
         BookRecord = "AddBookRecord"
+        BookRequest = "AddBookRequest"
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"

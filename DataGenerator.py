@@ -1,21 +1,13 @@
 import json
 
 
-def BaseData(Header, Data="", Failure="", Error=""):
+def BaseData(Header, Data="", Failure="", Error="", Misc=""):
     Data = {
         "Header": Header,
         "Data": Data,
         "Failure": Failure,
-        "Error": Error
-    }
-    return json.dumps(Data)
-
-
-def Stats(Header, Success, Failure):
-    Data = {
-        "Header": Header,
-        "Success": Success,
-        "Failure": Failure
+        "Error": Error,
+        "Misc": Misc
     }
     return json.dumps(Data)
 
@@ -65,6 +57,15 @@ def NewsData(News, Time):
     return json.dumps(Data)
 
 
+def Stats(Header, Success, Failure):
+    Data = {
+        "Header": Header,
+        "Success": Success,
+        "Failure": Failure
+    }
+    return json.dumps(Data)
+
+
 def Request():
     Data = {
         "ID": "",
@@ -80,11 +81,12 @@ def Request():
         "Time": "",
         "Availability": "",
         "Thumbnail": "",
-        "SearchFilter":[],
+        "SearchFilter": [],
         "Category": "",
         "Book": "",
         "Count": "",
         "Misc": "",
-        "Sort":""
-
+        "Sort": "",
+        "Range": [],
+        "Status": ""
     }

@@ -233,7 +233,7 @@ def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
 def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like "
                         "%s ORDER  BY ISBN %s;",
-        (Author + "%", Sort))
+                        (Author + "%", Sort))
     return Core.Cursor.fetchmany(N)
 
 
@@ -284,11 +284,6 @@ def GetDigital(Core: Init, ISBN: str):
 
 # Update headlines
 def UpdateLatestNews():
-    def Parser(Strings: list):
-        print(Strings)
-        Data = Header.Split.join(Strings)
-        return f"{len(Data)}{Header.Split}{Data}".encode()
-
     global UpdateTime, Headlines
     newsapi = NewsApiClient(api_key=NewsAPIClientKey)
     if UpdateTime is None or UpdateTime - datetime.now() > timedelta(minutes=30):
@@ -347,52 +342,53 @@ def GetLatestNewsUpdateTime():
 
 def InitBookRequests(Core: Init):
     if not TableExist(Core, "RequestsRecord"):
-        try:
-            Core.Cursor.execute(
-                "CREATE TABLE RequestsRecord (RQNO VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512) ,Author VARCHAR("
-                "512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) );")
-            return True
-        except mysql.connector.Error:
-            return False
+        Core.Cursor.execute("CREATE TABLE RequestsRecord (RQNO INT(255) AUTO_INCREMENT PRIMARY KEY ,BookName VARCHAR("
+                            "512) ,Author VARCHAR(512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) );")
+        return True
     return False
 
 
-def CreateNewRequest(Core: Init, Name: str, Author: str, RequestedBy: str, Status=RequestStatus.processing):
+def AddNewRequest(Core: Init, Name: str, Author: str, RequestedBy: str, Status=RequestStatus.processing):
     try:
-        rqno = int(GetLastRecord(Core)) + 1
         Core.Cursor.execute(
-            "INSERT INTO RequestsRecord(BookName,RQNO,Author,RequestedBY,Status ) VALUES (%s, %s,%s,%s,%s);",
-            (Name, rqno, Author, RequestedBy, Status))
+            "INSERT INTO RequestsRecord(BookName,Author,RequestedBY,Status ) VALUES (%s,%s,%s,%s);",
+            (Name, Author, RequestedBy, Status))
         Core.Database.commit()
         return True
     except mysql.connector.Error:
         return False
 
 
-def GetLastRecord(Core: Init):
+def GetBookRequestCount(Core: Init):
     Core.Cursor.execute("Select Max(RQNO) from RequestsRecord")
     return Core.Cursor.fetchone()
 
 
-def UpdateRequestStatus(Core: Init, Status: RequestStatus, RQNO: int):
+def UpdateBookRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int):
     try:
-        Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, RQNO))
+        Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where RQNO = %s", (Status, ReqNo))
         Core.Database.commit()
         return True
     except mysql.connector.Error:
         return False
 
 
-def GetPendingRequests(Core: Init):
-    Core.Cursor.execute("Select * from RequestsRecord where Status = %s", (RequestStatus.processing,))
+def GetBookRequests(Core: Init):
+    Core.Cursor.execute("Select * from RequestsRecord ")
     return Core.Cursor.fetchall()
 
 
-def CheckBookIfExist(Core: Init, BookName: str):
-    Core.Cursor.execute("SELECT *  FROM BooksRecord WHERE BookName like %s;",
-                        (BookName + "%",))
-    st = Core.Cursor.fetchmany()
-    if len(st) == 0:
-        return False
-    else:
-        return True
+def GetBookRequestsByStatus(Core: Init, Status):
+    Core.Cursor.execute("Select * from RequestsRecord where Status = %s", (Status,))
+    return Core.Cursor.fetchall()
+
+
+def GetBookRequestsByUserName(Core: Init, Name: str):
+    Core.Cursor.execute("Select * from RequestsRecord where RequestedBy = %s", (Name,))
+    return Core.Cursor.fetchall()
+
+
+def GetBookRequestsByUserNameAndStatus(Core: Init, Name: str, Status):
+    Core.Cursor.execute("Select * from RequestsRecord where RequestedBy = %s AND Status = %s", (Name, Status))
+    return Core.Cursor.fetchall()
+

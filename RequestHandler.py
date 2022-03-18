@@ -112,6 +112,28 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
                     data = BooksData(Lis)
                     await Client.send(Parser(BaseData(Header.Success, data)))
+                elif Request == Header.Add.BookRequest:
+                    BookName = Data["BookName"]
+                    Author = Data["Author"]
+                    User = Data["UserName"]
+                    if AddNewRequest(CoreObject, BookName, Author, User):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                elif Request == Header.Fetch.BookRequestStatus:
+                    Status = Data["Status"]
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if Status != "":
+                        Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                        Count = len(Data)
+                        Data = RequestsData(Data[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    else:
+                        Data = GetBookRequestsByUserName(CoreObject, UserName)
+                        Count = len(Data)
+                        Data = RequestsData(Data[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -207,6 +229,40 @@ async def WebHandler(CoreObject: Init, Client, Data):
                             os.remove("FilesCache/" + ISBN + ".jpeg")
                         except FileNotFoundError:
                             pass
+                elif Request == Header.Fetch.BookRequest:
+                    Status = Data["Status"]
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if UserName != "":
+                        if Status != "":
+                            Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        else:
+                            Data = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    else:
+                        if Status != "":
+                            Data = GetBookRequestsByStatus(CoreObject, Status)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        else:
+                            Data = GetBookRequests(CoreObject)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                elif Request == Header.Update.BookRequest:
+                    RequestID = Data["Misc"]
+                    Status = Data["Status"]
+                    if UpdateBookRequestStatus(CoreObject, Status, RequestID):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]
@@ -318,6 +374,28 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
                     data = BooksData(Lis)
                     Client.send(Parser(BaseData(Header.Success, data)))
+                elif Request == Header.Add.BookRequest:
+                    BookName = Data["BookName"]
+                    Author = Data["Author"]
+                    User = Data["UserName"]
+                    if AddNewRequest(CoreObject, BookName, Author, User):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                elif Request == Header.Fetch.BookRequestStatus:
+                    Status = Data["Status"]
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if Status != "":
+                        Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                        Count = len(Data)
+                        Data = RequestsData(Data[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    else:
+                        Data = GetBookRequestsByUserName(CoreObject, UserName)
+                        Count = len(Data)
+                        Data = RequestsData(Data[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -413,6 +491,40 @@ def TCPHandler(CoreObject: Init, Client, Data):
                             os.remove("FilesCache/" + ISBN + ".jpeg")
                         except FileNotFoundError:
                             pass
+                elif Request == Header.Fetch.BookRequest:
+                    Status = Data["Status"]
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if UserName != "":
+                        if Status != "":
+                            Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        else:
+                            Data = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    else:
+                        if Status != "":
+                            Data = GetBookRequestsByStatus(CoreObject, Status)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        else:
+                            Data = GetBookRequests(CoreObject)
+                            Count = len(Data)
+                            Data = RequestsData(Data[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                elif Request == Header.Update.BookRequest:
+                    RequestID = Data["Misc"]
+                    Status = Data["Status"]
+                    if UpdateBookRequestStatus(CoreObject, Status, RequestID):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]
