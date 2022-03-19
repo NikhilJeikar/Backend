@@ -1,5 +1,4 @@
 from azure.storage.blob import PublicAccess
-import enum
 
 
 # Constants
