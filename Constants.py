@@ -52,6 +52,9 @@ class Header:
     Failed = "Failed"
     Login = "Login"
 
+    class Handler:
+        Handler1 = "Handler1"
+
     class Create:
         User = "CreateUser"
         Admin = "CreateAdmin"

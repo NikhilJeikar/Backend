@@ -5,8 +5,10 @@ import random
 
 from Init import Init
 from Constants import *
-from RequestHandler import WebHandler,TCPHandler
+from RequestHandler import WebHandler, TCPHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord
+from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
+    InitMagazineAuthorRecord
 from Storage import InitStorage
 
 
@@ -30,6 +32,11 @@ def InitDatabase(Object: Init):
     InitBookDatabase(Object)
     InitDigitalBookTable(Object)
     InitBookRequests(Object)
+    InitMagazines(CoreObject)
+    InitMagazineRecord(CoreObject)
+    InitMagazineAuthorRecord(CoreObject)
+    InitStudentMagazineRecord(CoreObject)
+    InitStudentMagazineRequestRecord(CoreObject)
 
 
 def TCPRequestProcessing(Client, Address):
@@ -68,7 +75,11 @@ async def WebRequestProcessing(WebSocket, Path):
 CoreObject = Init(IP, WebPort, TCPPort)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
 CoreObject.WebRequestProcessing = WebRequestProcessing
-InitDatabase(CoreObject)
+try:
+    InitDatabase(CoreObject)
+except Exception as exception:
+    print("Error: ", exception)
+    exit(-1)
 
 # AddUser(CoreObject, hashlib.sha512("Nikhil".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.SuperAdmin)
@@ -76,7 +87,7 @@ InitDatabase(CoreObject)
 #         Privileges.Admin)
 # AddUser(CoreObject, hashlib.sha512("User".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.User)
-#
+
 # for i in range(1000):
 #     AddBookRecord(CoreObject, f"Book-{i}", ''.join(random.choices(string.ascii_uppercase +
 #                                                                   string.digits, k=7)),

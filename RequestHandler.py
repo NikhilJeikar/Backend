@@ -116,7 +116,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     BookName = Data["BookName"]
                     Author = Data["Author"]
                     User = Data["UserName"]
-                    if AddNewRequest(CoreObject, BookName, Author, User):
+                    if RequestBooks(CoreObject, BookName, Author, User):
                         await Client.send(Parser(BaseData(Header.Success)))
                     await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
                 elif Request == Header.Fetch.BookRequestStatus:
@@ -378,7 +378,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     BookName = Data["BookName"]
                     Author = Data["Author"]
                     User = Data["UserName"]
-                    if AddNewRequest(CoreObject, BookName, Author, User):
+                    if RequestBooks(CoreObject, BookName, Author, User):
                         Client.send(Parser(BaseData(Header.Success)))
                     Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
                 elif Request == Header.Fetch.BookRequestStatus:
