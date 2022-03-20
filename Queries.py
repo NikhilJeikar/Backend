@@ -171,13 +171,10 @@ def GetUsername(Core: Init, ID: str):
 # Books related queries
 def InitBookDatabase(Core: Init):
     if not TableExist(Core, "BooksRecord"):
-        try:
-            Core.Cursor.execute(
-                "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
-                ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
-            return True
-        except mysql.connector.Error:
-            return False
+        Core.Cursor.execute(
+            "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
+            ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
+        return True
     return False
 
 
@@ -240,7 +237,10 @@ def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
 # Digital books related queries
 def InitDigitalBookTable(Core: Init):
     if not TableExist(Core, "DigitalBooks"):
-        Core.Cursor.execute("CREATE TABLE DigitalBooks (ISBN VARCHAR(512) PRIMARY KEY , Location VARCHAR(4096) );")
+        Core.Cursor.execute("CREATE TABLE DigitalBooks (ISBN VARCHAR(512) NOT NULL, Location VARCHAR(4096) ,"
+                            "FOREIGN KEY (ISBN) REFERENCES BooksRecord(ISBN));")
+        return True
+    return False
 
 
 def AddDigital(Core: Init, ISBN: str, Location: str):
@@ -343,7 +343,8 @@ def GetLatestNewsUpdateTime():
 def InitBookRequests(Core: Init):
     if not TableExist(Core, "RequestsRecord"):
         Core.Cursor.execute("CREATE TABLE RequestsRecord (ReqNO INT(255) AUTO_INCREMENT PRIMARY KEY ,BookName VARCHAR("
-                            "512) ,Author VARCHAR(512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) );")
+                            "512) ,Author VARCHAR(512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) "
+                            ",FOREIGN KEY (RequestedBy) REFERENCES Credentials (Username));")
         return True
     return False
 
@@ -406,7 +407,8 @@ def InitMagazines(Core: Init):
 def InitMagazineRecord(Core: Init):
     if not TableExist(Core, "MagazineRecord"):
         Core.Cursor.execute("CREATE TABLE MagazineRecord (JournalName VARCHAR(512) ,Volume VARCHAR(128),"
-                            "Issue VARCHAR(128),ReleaseDate DATE, Location VARCHAR(4096));")
+                            "Issue VARCHAR(128),ReleaseDate DATE, Location VARCHAR(4096), FOREIGN KEY (JournalName)"
+                            " REFERENCES Magazines(JournalName));")
         return True
     return False
 
@@ -414,7 +416,7 @@ def InitMagazineRecord(Core: Init):
 def InitMagazineAuthorRecord(Core: Init):
     if not TableExist(Core, "MagazineAuthorRecord"):
         Core.Cursor.execute("CREATE TABLE MagazineAuthorRecord (JournalName VARCHAR(512),ReleaseDate DATE,"
-                            "Author VARCHAR(512));")
+                            "Author VARCHAR(512), FOREIGN KEY (JournalName) REFERENCES Magazines(JournalName));")
         return True
     return False
 
@@ -422,7 +424,8 @@ def InitMagazineAuthorRecord(Core: Init):
 def InitStudentMagazineRecord(Core: Init):
     if not TableExist(Core, "StudentMagazineRecord"):
         Core.Cursor.execute("CREATE TABLE StudentMagazineRecord (UserName VARCHAR(512), JournalName VARCHAR(512), "
-                            "Email VARCHAR(512));")
+                            "Email VARCHAR(512), FOREIGN KEY (JournalName) REFERENCES Magazines(JournalName),"
+                            "FOREIGN KEY (UserName) REFERENCES Credentials(UserName));")
         return True
     return False
 
@@ -430,7 +433,9 @@ def InitStudentMagazineRecord(Core: Init):
 def InitStudentMagazineRequestRecord(Core: Init):
     if not TableExist(Core, "StudentMagazineRequestRecord"):
         Core.Cursor.execute("CREATE TABLE StudentMagazineRequestRecord (ReqNO INT(255) AUTO_INCREMENT PRIMARY KEY ,"
-                            "UserName VARCHAR(512), JournalName VARCHAR(512),Status INTEGER (255),Email VARCHAR(512));")
+                            "UserName VARCHAR(512), JournalName VARCHAR(512),Status INTEGER (255),Email VARCHAR(512),"
+                            " FOREIGN KEY (JournalName) REFERENCES Magazines(JournalName),"
+                            "FOREIGN KEY (UserName) REFERENCES Credentials(UserName));")
         return True
     return False
 
@@ -453,16 +458,6 @@ def GetUserNameByMagazine(Core: Init, Name: str):
 def GetUserCountByMagazine(Core: Init, Name: str):
     Core.Cursor.execute("Select COUNT(UserName) from StudentMagazineRecord WHERE JournalName = %s; ", (Name,))
     return Core.Cursor.fetchone()[0]
-
-
-def AddMagazineToUser(Core: Init, UserName: str, Magazine: str, Email: str):
-    try:
-        Core.Cursor.execute("INSERT INTO StudentMagazineRecord(JournalName,UserName,Email ) VALUES (%s,%s,%s);",
-                            (Magazine, UserName, Email))
-        Core.Database.commit()
-        return True
-    except mysql.connector.Error:
-        return False
 
 
 def IsMagazineSubscribedByUser(Core: Init, UserName: str, Magazine: str):
@@ -503,6 +498,13 @@ def GetSubscriptionRequestByUsername(Core: Init, Username: str):
     return Core.Cursor.fetchall()
 
 
+def GetSubscriptionRequestByUsernameAndStatus(Core: Init, Username: str, Status: str):
+    Core.Cursor.execute(
+        "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE UserName = %s AND Status = "
+        "%s; ", (Username, Status))
+    return Core.Cursor.fetchall()
+
+
 def GetSubscriptionRequestByJournalName(Core: Init, JournalName: str):
     Core.Cursor.execute(
         "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE JournalName = %s; ",
@@ -516,7 +518,56 @@ def GetSubscriptionRequestBy(Core: Init, By: str, Value: str):
     return Core.Cursor.fetchall()
 
 
-def AddNewMagazine(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str, Location: str, Authors: list):
+def SearchMagazineByName(Core: Init, Name: str, N: int, Sort="ASC"):
+    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
+                        "JournalName like %s ORDER BY JournalName %s; ", (Name, Sort))
+    return Core.Cursor.fetchmany(N)
+
+
+def SearchMagazineByAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
+    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord INNER JOIN "
+                        "MagazinesAuthorRecord on MagazinesAuthorRecord.JournalName = MagazineRecord.JournalName WHERE"
+                        " MagazinesAuthorRecord.Author LIKE %s ORDER BY JournalName %s; ", (Author, Sort))
+    return Core.Cursor.fetchmany(N)
+
+
+def GetMagazinesByName(Core: Init, Name: str):
+    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
+                        "JournalName = %s; ", (Name,))
+    return Core.Cursor.fetchall()
+
+
+def GetSubscriptionByUserName(Core: Init, Name: str):
+    Core.Cursor.execute(
+        "Select JournalName,UserName,Email from StudentMagazineRecord WHERE UserName = %s ; ", (Name,))
+    return Core.Cursor.fetchall()
+
+
+def GetSubscriptionByMagazineName(Core: Init, MagazineName: str):
+    Core.Cursor.execute(
+        "Select JournalName,UserName,Email from StudentMagazineRecord WHERE JournalName = %s ; ", (MagazineName,))
+    return Core.Cursor.fetchall()
+
+
+def UpdateSubscriptionRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int):
+    try:
+        Core.Cursor.execute("UPDATE StudentMagazineRequestRecord SET Status = %s where ReqNO = %s", (Status, ReqNo))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
+
+
+def AddMagazine(Core: Init, Magazine: str):
+    try:
+        Core.Cursor.execute("INSERT INTO Magazines(JournalName) VALUES (%s);", (Magazine,))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
+
+
+def AddMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str, Location: str, Authors: list):
     try:
         Core.Cursor.execute("INSERT INTO MagazineRecord (JournalName ,Volume ,Issue ,ReleaseDate , Location ) VALUES "
                             "(%s,%s,%s,%s,%s);", (Magazine, Volume, Issue, Date, Location))
@@ -530,21 +581,42 @@ def AddNewMagazine(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str
         return False
 
 
-def SearchMagazineByName(Core: Init, Name: str):
-    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
-                        "JournalName like %s ; ", (Name,))
-    return Core.Cursor.fetchall()
+def AddMagazineToUser(Core: Init, UserName: str, Magazine: str, Email: str):
+    try:
+        Core.Cursor.execute("INSERT INTO StudentMagazineRecord(JournalName,UserName,Email ) VALUES (%s,%s,%s);",
+                            (Magazine, UserName, Email))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
 
 
-def SearchMagazineByAuthor(Core: Init, Author: str):
-    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord INNER JOIN "
-                        "MagazinesAuthorRecord on MagazinesAuthorRecord.JournalName = MagazineRecord.JournalName WHERE"
-                        " MagazinesAuthorRecord.Author LIKE %s; ", (Author,))
-    return Core.Cursor.fetchall()
+def RemoveMagazineFromUser(Core: Init, UserName: str, Magazine: str):
+    try:
+        Core.Cursor.execute("DELETE FROM StudentMagazineRecord WHERE JournalName = %s AND UserName = %s;",
+                            (Magazine, UserName))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
 
 
-def GetMagazinesByName(Core: Init, Name: str):
-    Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
-                        "JournalName = %s; ", (Name,))
-    return Core.Cursor.fetchall()
+def RemoveMagazineRecord(Core: Init, Magazine: str, Date: str):
+    try:
+        Core.Cursor.execute("DELETE FROM MagazineRecord WHERE JournalName = %s AND ReleaseDate = %s;", (Magazine, Date))
+        Core.Database.commit()
+        Core.Cursor.execute("DELETE FROM MagazineAuthorRecord WHERE JournalName = %s AND ReleaseDate = %s;",
+                            (Magazine, Date))
+        Core.Database.commit()
+    except mysql.connector.Error:
+        return False
 
+
+def UpdateMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str, Location: str, Authors: list):
+    if AddMagazineRecord(Core, Magazine, Volume, Issue, Date, Location, Authors):
+        return True
+    else:
+        if RemoveMagazineRecord(Core, Magazine, Date) and AddMagazineRecord(Core, Magazine, Volume, Issue, Date,
+                                                                            Location, Authors):
+            return True
+        return False

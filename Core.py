@@ -1,8 +1,8 @@
 import hashlib
-import json
 import string
 import random
 
+import json
 from Init import Init
 from Constants import *
 from RequestHandler import WebHandler, TCPHandler
@@ -30,9 +30,9 @@ def Read(Client, BufferSize):
 def InitDatabase(Object: Init):
     InitUserTable(Object)
     InitBookDatabase(Object)
+    InitMagazines(CoreObject)
     InitDigitalBookTable(Object)
     InitBookRequests(Object)
-    InitMagazines(CoreObject)
     InitMagazineRecord(CoreObject)
     InitMagazineAuthorRecord(CoreObject)
     InitStudentMagazineRecord(CoreObject)

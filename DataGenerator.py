@@ -31,7 +31,7 @@ def BooksData(Books):
     return List
 
 
-def RequestData(RequestID, BookName, Author, RequestBy, Status):
+def BookRequestData(RequestID, BookName, Author, RequestBy, Status):
     Data = {
         "RequestID": RequestID,
         "BookName": BookName,
@@ -42,10 +42,10 @@ def RequestData(RequestID, BookName, Author, RequestBy, Status):
     return json.dumps(Data)
 
 
-def RequestsData(Requests):
+def BooksRequestData(Requests):
     List = []
     for Request in Requests:
-        List.append(RequestData(Request[0], Request[1], Request[2], Request[3], Request[4]))
+        List.append(BookRequestData(Request[0], Request[1], Request[2], Request[3], Request[4]))
     return List
 
 
@@ -55,6 +55,57 @@ def NewsData(News, Time):
         "Time": Time
     }
     return json.dumps(Data)
+
+
+def MagazineData(Name, Volume, Issue, ReleaseDate, Location):
+    Data = {
+        "Name": Name,
+        "Volume": Volume,
+        "Issue": Issue,
+        "ReleaseDate": ReleaseDate,
+        "Location": Location
+    }
+    return json.dumps(Data)
+
+
+def MagazinesData(Magazines):
+    List = []
+    for Magazine in Magazines:
+        List.append(MagazineData(Magazine[0], Magazine[1], Magazine[2], Magazine[3], Magazine[4]))
+    return List
+
+
+def SubscriptionData(JournalName, UserName, Email):
+    Data = {
+        "JournalName": JournalName,
+        "UserName": UserName,
+        "Email": Email
+    }
+    return json.dumps(Data)
+
+
+def SubscriptionsData(Subscriptions):
+    List = []
+    for Subscription in Subscriptions:
+        List.append(SubscriptionData(Subscription[0], Subscription[1], Subscription[2]))
+    return List
+
+
+def SubscriptionRequestData(JournalName, UserName, Email, Status):
+    Data = {
+        "JournalName": JournalName,
+        "UserName": UserName,
+        "Email": Email,
+        "Status": Status
+    }
+    return json.dumps(Data)
+
+
+def SubscriptionRequestsData(Subscriptions):
+    List = []
+    for Subscription in Subscriptions:
+        List.append(SubscriptionData(Subscription[0], Subscription[1], Subscription[2]))
+    return List
 
 
 def Stats(Header, Success, Failure):
@@ -67,6 +118,27 @@ def Stats(Header, Success, Failure):
 
 
 def Request():
+    Base = {
+        "ID": "",
+        "Handler": "",
+        "Header": "",
+        "Credentials": "",
+        "Data": "",
+        "Other": ""
+    }
+    Credentials = {
+        "UserName": "",
+        "Password": "",
+        "Other": ""
+    }
+    Book = {
+        "ISBN": "",
+        "BookName": "",
+        "Author": "",
+        "Type": "",
+        "Time": "",
+        "Availability": "",
+    }
     Data = {
         "ID": "",
         "Handler": "",
@@ -76,9 +148,8 @@ def Request():
         "Permission": "",
         "ISBN": "",
         "BookName": "",
-        "Author": "",
+        "Author": [],
         "Type": "",
-        "Time": "",
         "Availability": "",
         "Thumbnail": "",
         "SearchFilter": [],
@@ -88,5 +159,9 @@ def Request():
         "Misc": "",
         "Sort": "",
         "Range": [],
-        "Status": ""
+        "Status": "",
+        "Email": "",
+        "Volume": "",
+        "Issue": ""
+
     }

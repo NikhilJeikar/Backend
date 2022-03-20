@@ -93,8 +93,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     ISBN = Data["ISBN"]
                     Count = Data["Count"]
                     Sort = Data["Sort"]
-                    data = SearchISBN(CoreObject, ISBN, Count, Sort)
-                    data = BooksData(data)
+                    data = BooksData(SearchISBN(CoreObject, ISBN, Count, Sort))
                     await Client.send(Parser(BaseData(Header.Success, data)))
                 elif Request == Header.Search.Books:
                     Count = Data["Count"]
@@ -110,8 +109,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Lis += SearchISBN(CoreObject, ISBN, int(Count / len(Filters)), Sort)
                     if BookParams.Author in Filters:
                         Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
-                    data = BooksData(Lis)
-                    await Client.send(Parser(BaseData(Header.Success, data)))
+                    await Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
                     Author = Data["Author"]
@@ -124,16 +122,85 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     UserName = Data["Username"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
-                    if Status != "":
-                        Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
-                        Count = len(Data)
-                        Data = RequestsData(Data[LLimit:ULimit])
-                        await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    if UserName == GetUsername(CoreObject, ID):
+                        if Status != "":
+                            Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                        else:
+                            Out = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
-                        Data = GetBookRequestsByUserName(CoreObject, UserName)
-                        Count = len(Data)
-                        Data = RequestsData(Data[LLimit:ULimit])
-                        await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
+                elif Request == Header.Add.MagazineSubscriptionRequest:
+                    UserName = Data["UserName"]
+                    MagazineName = Data["BookName"]
+                    Email = Data["Email"]
+                    if IsMagazineSubscribedByUser(CoreObject, UserName, MagazineName):
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                    else:
+                        if RequestSubscription(CoreObject, UserName, MagazineName, Email, RequestStatus.processing):
+                            await Client.send(Parser(BaseData(Header.Success)))
+                        else:
+                            await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                elif Request == Header.Search.Magazines:
+                    MagazineName = Data["BookName"]
+                    Filters = Data["SearchFilter"]
+                    Author = Data["Author"]
+                    Count = Data["Count"]
+                    Sort = Data["Sort"]
+                    Lis = []
+                    if MagazineParams.Name in Filters:
+                        Lis += SearchMagazineByName(CoreObject, MagazineName, int(Count / len(Filters)), Sort)
+                    if MagazineParams.Author in Filters:
+                        Lis += SearchMagazineByAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
+                    await Client.send(Parser(BaseData(Header.Success, Data=MagazinesData(Lis))))
+                elif Request == Header.Fetch.MyMagazineRequest:
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    Status = Data["Status"]
+                    if UserName == GetUsername(CoreObject, ID):
+                        if Status != "":
+                            Out = GetSubscriptionRequestByUsernameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = SubscriptionRequestsData(Out)
+                            else:
+                                Out = SubscriptionRequestsData(Out[LLimit:ULimit])
+                        else:
+                            Out = GetSubscriptionRequestByUsername(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = SubscriptionRequestsData(Out)
+                            else:
+                                Out = SubscriptionRequestsData(Out[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
+                elif Request == Header.Fetch.MySubscription:
+                    UserName = Data["UserName"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if UserName == GetUsername(CoreObject, ID):
+                        Out = GetSubscriptionByUserName(CoreObject, UserName)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionsData(Out)
+                        else:
+                            Out = SubscriptionsData(Out[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -146,7 +213,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Update.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
@@ -189,7 +256,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Add.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
@@ -236,26 +303,38 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     LLimit = Data["Range"][1]
                     if UserName != "":
                         if Status != "":
-                            Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
-                            Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                         else:
-                            Data = GetBookRequestsByUserName(CoreObject, UserName)
-                            Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            Out = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
                         if Status != "":
-                            Data = GetBookRequestsByStatus(CoreObject, Status)
+                            Out = GetBookRequestsByStatus(CoreObject, Status)
                             Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                         else:
-                            Data = GetBookRequests(CoreObject)
+                            Out = GetBookRequests(CoreObject)
                             Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            await Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                 elif Request == Header.Update.BookRequest:
                     RequestID = Data["Misc"]
                     Status = Data["Status"]
@@ -263,6 +342,81 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Success)))
                     else:
                         await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+                elif Request == Header.Fetch.MagazineRequest:
+                    Status = Data["Status"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if Status == "":
+                        Out = GetSubscriptionRequest(CoreObject)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionRequestsData(Out)
+                        else:
+                            Out = BooksRequestData(Out[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        Out = GetSubscriptionRequestByStatus(CoreObject, Status)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionRequestsData(Out)
+                        else:
+                            Out = BooksRequestData(Out[LLimit:ULimit])
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Update.MagazineRequest:
+                    RequestID = Data["Misc"]
+                    Status = Data["Status"]
+                    if UpdateSubscriptionRequestStatus(CoreObject, Status, RequestID):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+                elif Request == Header.Add.MagazineRecord:
+                    Authors = Data["Author"]
+                    MagazineName = Data["BookName"]
+                    Volume = Data["Volume"]
+                    Issue = Data["Issue"]
+                    ReleaseDate = Data["Misc"]
+                    File = Data["Book"].encode()
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save.write(File)
+                    Save.close()
+                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
+                                                                                   Issue, ReleaseDate, FileUrl,
+                                                                                   Authors):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
+
+                        await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+
+                    try:
+                        os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    except FileNotFoundError:
+                        pass
+                elif Request == Header.Update.MagazineRecord:
+                    Authors = Data["Author"]
+                    MagazineName = Data["BookName"]
+                    Volume = Data["Volume"]
+                    Issue = Data["Issue"]
+                    ReleaseDate = Data["Misc"]
+                    File = Data["Book"].encode()
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save.write(File)
+                    Save.close()
+                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    if UpdateMagazineRecord(CoreObject, MagazineName, Volume, Issue, ReleaseDate, FileUrl, Authors):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
+
+                        await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+
+                    try:
+                        os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    except FileNotFoundError:
+                        pass
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]
@@ -355,8 +509,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     ISBN = Data["ISBN"]
                     Count = Data["Count"]
                     Sort = Data["Sort"]
-                    data = SearchISBN(CoreObject, ISBN, Count, Sort)
-                    data = BooksData(data)
+                    data = BooksData(SearchISBN(CoreObject, ISBN, Count, Sort))
                     Client.send(Parser(BaseData(Header.Success, data)))
                 elif Request == Header.Search.Books:
                     Count = Data["Count"]
@@ -372,8 +525,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Lis += SearchISBN(CoreObject, ISBN, int(Count / len(Filters)), Sort)
                     if BookParams.Author in Filters:
                         Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
-                    data = BooksData(Lis)
-                    Client.send(Parser(BaseData(Header.Success, data)))
+                    Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
                     Author = Data["Author"]
@@ -386,16 +538,85 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     UserName = Data["Username"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
-                    if Status != "":
-                        Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
-                        Count = len(Data)
-                        Data = RequestsData(Data[LLimit:ULimit])
-                        Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                    if UserName == GetUsername(CoreObject, ID):
+                        if Status != "":
+                            Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                        else:
+                            Out = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
-                        Data = GetBookRequestsByUserName(CoreObject, UserName)
-                        Count = len(Data)
-                        Data = RequestsData(Data[LLimit:ULimit])
-                        Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
+                elif Request == Header.Add.MagazineSubscriptionRequest:
+                    UserName = Data["UserName"]
+                    MagazineName = Data["BookName"]
+                    Email = Data["Email"]
+                    if IsMagazineSubscribedByUser(CoreObject, UserName, MagazineName):
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                    else:
+                        if RequestSubscription(CoreObject, UserName, MagazineName, Email, RequestStatus.processing):
+                            Client.send(Parser(BaseData(Header.Success)))
+                        else:
+                            Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                elif Request == Header.Search.Magazines:
+                    MagazineName = Data["BookName"]
+                    Filters = Data["SearchFilter"]
+                    Author = Data["Author"]
+                    Count = Data["Count"]
+                    Sort = Data["Sort"]
+                    Lis = []
+                    if MagazineParams.Name in Filters:
+                        Lis += SearchMagazineByName(CoreObject, MagazineName, int(Count / len(Filters)), Sort)
+                    if MagazineParams.Author in Filters:
+                        Lis += SearchMagazineByAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
+                    Client.send(Parser(BaseData(Header.Success, Data=MagazinesData(Lis))))
+                elif Request == Header.Fetch.MyMagazineRequest:
+                    UserName = Data["Username"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    Status = Data["Status"]
+                    if UserName == GetUsername(CoreObject, ID):
+                        if Status != "":
+                            Out = GetSubscriptionRequestByUsernameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = SubscriptionRequestsData(Out)
+                            else:
+                                Out = SubscriptionRequestsData(Out[LLimit:ULimit])
+                        else:
+                            Out = GetSubscriptionRequestByUsername(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = SubscriptionRequestsData(Out)
+                            else:
+                                Out = SubscriptionRequestsData(Out[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
+                elif Request == Header.Fetch.MySubscription:
+                    UserName = Data["UserName"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if UserName == GetUsername(CoreObject, ID):
+                        Out = GetSubscriptionByUserName(CoreObject, UserName)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionsData(Out)
+                        else:
+                            Out = SubscriptionsData(Out[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -408,7 +629,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Update.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
@@ -451,7 +672,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Add.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
@@ -498,26 +719,38 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     LLimit = Data["Range"][1]
                     if UserName != "":
                         if Status != "":
-                            Data = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
-                            Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                         else:
-                            Data = GetBookRequestsByUserName(CoreObject, UserName)
-                            Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            Out = GetBookRequestsByUserName(CoreObject, UserName)
+                            Count = len(Out)
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
                         if Status != "":
-                            Data = GetBookRequestsByStatus(CoreObject, Status)
+                            Out = GetBookRequestsByStatus(CoreObject, Status)
                             Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                         else:
-                            Data = GetBookRequests(CoreObject)
+                            Out = GetBookRequests(CoreObject)
                             Count = len(Data)
-                            Data = RequestsData(Data[LLimit:ULimit])
-                            Client.send(Parser(BaseData(Header.Success, Data=Data, Misc=Count)))
+                            if ULimit < 0:
+                                Out = BooksRequestData(Out)
+                            else:
+                                Out = BooksRequestData(Out[LLimit:ULimit])
+                            Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                 elif Request == Header.Update.BookRequest:
                     RequestID = Data["Misc"]
                     Status = Data["Status"]
@@ -525,6 +758,81 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Success)))
                     else:
                         Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+                elif Request == Header.Fetch.MagazineRequest:
+                    Status = Data["Status"]
+                    ULimit = Data["Range"][0]
+                    LLimit = Data["Range"][1]
+                    if Status == "":
+                        Out = GetSubscriptionRequest(CoreObject)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionRequestsData(Out)
+                        else:
+                            Out = BooksRequestData(Out[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                    else:
+                        Out = GetSubscriptionRequestByStatus(CoreObject, Status)
+                        Count = len(Out)
+                        if ULimit < 0:
+                            Out = SubscriptionRequestsData(Out)
+                        else:
+                            Out = BooksRequestData(Out[LLimit:ULimit])
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Update.MagazineRequest:
+                    RequestID = Data["Misc"]
+                    Status = Data["Status"]
+                    if UpdateSubscriptionRequestStatus(CoreObject, Status, RequestID):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+                elif Request == Header.Add.MagazineRecord:
+                    Authors = Data["Author"]
+                    MagazineName = Data["BookName"]
+                    Volume = Data["Volume"]
+                    Issue = Data["Issue"]
+                    ReleaseDate = Data["Misc"]
+                    File = Data["Book"].encode()
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save.write(File)
+                    Save.close()
+                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
+                                                                                   Issue, ReleaseDate, FileUrl,
+                                                                                   Authors):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
+
+                        Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+
+                    try:
+                        os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    except FileNotFoundError:
+                        pass
+                elif Request == Header.Update.MagazineRecord:
+                    Authors = Data["Author"]
+                    MagazineName = Data["BookName"]
+                    Volume = Data["Volume"]
+                    Issue = Data["Issue"]
+                    ReleaseDate = Data["Misc"]
+                    File = Data["Book"].encode()
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save.write(File)
+                    Save.close()
+                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    if UpdateMagazineRecord(CoreObject, MagazineName, Volume, Issue, ReleaseDate, FileUrl, Authors):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
+
+                        Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
+
+                    try:
+                        os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    except FileNotFoundError:
+                        pass
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]

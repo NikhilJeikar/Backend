@@ -20,9 +20,9 @@ class Avail:
 
 
 class RequestStatus:
-    processing = "PROCESSING"
-    approved = "APPROVED"
-    declined = "DECLINED"
+    processing = 1
+    approved = 2
+    declined = 4
 
 
 class BookParams:
@@ -30,6 +30,11 @@ class BookParams:
     Name = "Name"
     Author = "Author"
     Type = "Type"
+
+
+class MagazineParams:
+    Name = "MagazineName"
+    Author = "Author"
 
 
 class Error:
@@ -62,6 +67,8 @@ class Header:
         Password = "UpdatePassword"
         BookRecord = "UpdateRecord"
         BookRequest = "UpdateBookRequestStatus"
+        MagazineRequest = "UpdateMagazineRequestStatus"
+        MagazineRecord = "UpdateMagazineRecordStatus"
 
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
@@ -69,9 +76,14 @@ class Header:
         News = "FetchNews"
         BookRequest = "FetchBookRequest"
         BookRequestStatus = "FetchBookRequestStatus"
+        MyMagazineRequest = "FetchMySubscriptionRequest"
+        MySubscription = "FetchMySubscription"
+        MagazineRequest = "FetchSubscriptionRequest"
+        CurrentSubscription = "FetchCurrentSubscription"
 
     class Search:
         Books = "SearchBooks"
+        Magazines = "SearchMagazine"
 
     class Categories:
         Business = "business"
@@ -85,6 +97,8 @@ class Header:
     class Add:
         BookRecord = "AddBookRecord"
         BookRequest = "AddBookRequest"
+        MagazineRecord = "AddMagazineRecord"
+        MagazineSubscriptionRequest = "AddSubscriptionRequest"
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
