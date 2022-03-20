@@ -9,7 +9,7 @@ from RequestHandler import WebHandler, TCPHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord
 from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
     InitMagazineAuthorRecord
-from Storage import InitStorage
+from ThirdPartyAPI import InitStorage
 
 
 def Read(Client, BufferSize):

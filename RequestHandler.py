@@ -1,6 +1,6 @@
 from DataGenerator import *
 from Queries import *
-from Storage import StoreThumbnail, StoreDigitalBooks
+from ThirdPartyAPI import StoreThumbnail, StoreDigitalBooks
 from Constants import *
 import os
 

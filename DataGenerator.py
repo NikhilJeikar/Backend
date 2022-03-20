@@ -108,37 +108,7 @@ def SubscriptionRequestsData(Subscriptions):
     return List
 
 
-def Stats(Header, Success, Failure):
-    Data = {
-        "Header": Header,
-        "Success": Success,
-        "Failure": Failure
-    }
-    return json.dumps(Data)
-
-
 def Request():
-    Base = {
-        "ID": "",
-        "Handler": "",
-        "Header": "",
-        "Credentials": "",
-        "Data": "",
-        "Other": ""
-    }
-    Credentials = {
-        "UserName": "",
-        "Password": "",
-        "Other": ""
-    }
-    Book = {
-        "ISBN": "",
-        "BookName": "",
-        "Author": "",
-        "Type": "",
-        "Time": "",
-        "Availability": "",
-    }
     Data = {
         "ID": "",
         "Handler": "",
@@ -163,5 +133,4 @@ def Request():
         "Email": "",
         "Volume": "",
         "Issue": ""
-
     }
