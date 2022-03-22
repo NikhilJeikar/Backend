@@ -216,14 +216,14 @@ return First N values in [BookName,ISBN,Thumbnail,Author,Availability,Type] this
 
 def SearchBookName(Core: Init, Name: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE BookName "
-                        "like %s ORDER  BY ISBN %s;", (Name + "%", Sort))
+                        f"like %s ORDER  BY ISBN {Sort};", (Name + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE ISBN like %s "
-                        "ORDER  BY ISBN %s;",
-                        (ISBN + "%", Sort))
+                        f"ORDER  BY ISBN {Sort};",
+                        (ISBN + "%", ))
     return Core.Cursor.fetchmany(N)
 
 

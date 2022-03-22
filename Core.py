@@ -65,7 +65,8 @@ async def WebRequestProcessing(WebSocket, Path):
     print("Websocket", Data)
     Client = WebSocketHandler(WebSocket)
     Size, Data = Data.split(Header.Split, maxsplit=1)
-    Data = json.load(Data)
+    print(Data)
+    Data = json.loads(Data)
     Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
         await WebHandler(CoreObject, Client, Data)
@@ -81,13 +82,13 @@ except Exception as exception:
     print("Error: ", exception)
     exit(-1)
 
-# AddUser(CoreObject, hashlib.sha512("Nikhil".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.SuperAdmin)
-# AddUser(CoreObject, hashlib.sha512("Admin".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.Admin)
-# AddUser(CoreObject, hashlib.sha512("User".encode()).hexdigest(), hashlib.sha512("qwerty".encode()).hexdigest(),
+# AddUser(CoreObject, "Nikhil", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.SuperAdmin + Privileges.Admin + Privileges.User)
+# AddUser(CoreObject, "Admin", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.Admin + Privileges.User)
+# AddUser(CoreObject, "User", hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.User)
-
+#
 # for i in range(1000):
 #     AddBookRecord(CoreObject, f"Book-{i}", ''.join(random.choices(string.ascii_uppercase +
 #                                                                   string.digits, k=7)),

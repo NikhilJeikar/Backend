@@ -109,6 +109,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Lis += SearchISBN(CoreObject, ISBN, int(Count / len(Filters)), Sort)
                     if BookParams.Author in Filters:
                         Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
+                    print(Parser(BaseData(Header.Success, BooksData(Lis))))
                     await Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
@@ -116,7 +117,8 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     User = Data["UserName"]
                     if RequestBooks(CoreObject, BookName, Author, User):
                         await Client.send(Parser(BaseData(Header.Success)))
-                    await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
                 elif Request == Header.Fetch.BookRequestStatus:
                     Status = Data["Status"]
                     UserName = Data["Username"]
