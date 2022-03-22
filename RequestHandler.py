@@ -22,7 +22,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
         Password = Data["Password"]
         Ret = AuthUser(CoreObject, UserName, Password)
         if Ret is not None:
-            await Client.send(Parser(BaseData(Header.Success, Ret,Misc=GetPrivilegeByID(CoreObject,Ret))))
+            await Client.send(Parser(BaseData(Header.Success, Ret, Misc=GetPrivilegeByID(CoreObject, Ret))))
         else:
             await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Credentials)))
     else:
