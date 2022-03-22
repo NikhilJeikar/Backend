@@ -58,6 +58,7 @@ class Header:
 
     class Handler:
         Handler1 = "Handler1"
+        Handler2 = "Handler2"
 
     class Create:
         User = "CreateUser"
