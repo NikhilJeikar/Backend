@@ -67,7 +67,6 @@ async def WebRequestProcessing(WebSocket, Path):
     print("Websocket", Data)
     Client = WebSocketHandler(WebSocket)
     Size, Data = Data.split(Header.Split, maxsplit=1)
-    print(Data)
     Data = json.loads(Data)
     Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
