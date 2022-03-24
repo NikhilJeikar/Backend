@@ -1,6 +1,6 @@
 from DataGenerator import *
 from Queries import *
-from ThirdPartyAPI import StoreThumbnail, StoreDigitalBooks
+from ThirdPartyAPI import StoreThumbnail, StoreDigitalBooks, StoreDigitalMagazine
 from Constants import *
 import os
 
@@ -381,8 +381,8 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
-                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
-                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                   "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
                                                                                    Issue, ReleaseDate, FileUrl,
                                                                                    Authors):
@@ -406,8 +406,8 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
-                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
-                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                   "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     if UpdateMagazineRecord(CoreObject, MagazineName, Volume, Issue, ReleaseDate, FileUrl, Authors):
                         await Client.send(Parser(BaseData(Header.Success)))
                     else:
@@ -797,8 +797,8 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
-                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
-                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                   "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
                                                                                    Issue, ReleaseDate, FileUrl,
                                                                                    Authors):
@@ -822,8 +822,8 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
-                    FileUrl = StoreDigitalBooks(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
-                                                "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
+                    FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
+                                                   "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     if UpdateMagazineRecord(CoreObject, MagazineName, Volume, Issue, ReleaseDate, FileUrl, Authors):
                         Client.send(Parser(BaseData(Header.Success)))
                     else:

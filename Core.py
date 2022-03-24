@@ -5,7 +5,7 @@ import random
 import json
 from Init import Init
 from Constants import *
-from RequestHandler import WebHandler, TCPHandler,Handler1TCPHandler,Handler1WebHandler
+from RequestHandler import WebHandler, TCPHandler, Handler1TCPHandler, Handler1WebHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord
 from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
     InitMagazineAuthorRecord
@@ -74,6 +74,7 @@ async def WebRequestProcessing(WebSocket, Path):
         await WebHandler(CoreObject, Client, Data)
     if Handler == Header.Handler.Handler2:
         await Handler1WebHandler(CoreObject, Client, Data)
+
 
 CoreObject = Init(IP, WebPort, TCPPort)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
