@@ -203,6 +203,35 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
+
+                elif Request == Header.Add.BookRenewal:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReturn:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReserve:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.FinePayment:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -223,8 +252,12 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
                         Save.write(File)
                         Save.close()
-                        Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                        File = Data["Thumbnail"].encode()
+                        Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                        Save.write(File)
+                        Save.close()
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
+                                                      "FilesCache/" + ISBN + ".jpeg")
                         FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
                         if UpdateBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                             ThumbnailUrl) and UpdateDigital(CoreObject, ISBN, FileUrl):
@@ -235,7 +268,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                             await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
 
                         try:
-                            os.remove("FilesCache/" + Thumbnail)
+                            os.remove("FilesCache/" + ISBN + ".jpeg")
                             os.remove("FilesCache/" + ISBN + ".pdf")
                         except FileNotFoundError:
                             pass
@@ -266,8 +299,12 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
                         Save.write(File)
                         Save.close()
-                        Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                        File = Data["Thumbnail"].encode()
+                        Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                        Save.write(File)
+                        Save.close()
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
+                                                      "FilesCache/" + ISBN + ".jpeg")
                         FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
                         if AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                          ThumbnailUrl) and AddDigital(CoreObject, ISBN, FileUrl):
@@ -278,7 +315,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                             await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
 
                         try:
-                            os.remove("FilesCache/" + Thumbnail)
+                            os.remove("FilesCache/" + ISBN + ".jpeg")
                             os.remove("FilesCache/" + ISBN + ".pdf")
                         except FileNotFoundError:
                             pass
@@ -419,6 +456,20 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     except FileNotFoundError:
                         pass
+
+                if Request == Header.Fetch.DueUsers:
+                    Result = ViewUsersWithDues(CoreObject)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                if Request == Header.Add.BookIssue:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = IssueBook(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]
@@ -848,65 +899,3 @@ def TCPHandler(CoreObject: Init, Client, Data):
             Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
 
 
-async def Handler1WebHandler(CoreObject: Init, Client, Data):
-    ID = Data["ID"]
-    Request = Data["Header"]
-    if Request == Header.Login:
-        UserName = Data["UserName"]
-        Password = Data["Password"]
-        Ret = AuthUser(CoreObject, UserName, Password)
-        if Ret is not None:
-            await Client.send(Parser(BaseData(Header.Success, Ret)))
-        else:
-            await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Credentials)))
-    else:
-        if IsUserID(CoreObject, ID):
-            if GetPrivilegeByID(CoreObject, ID) & Privileges.User:
-                if Request == Header.Add.BookRenewal:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.BookReturn:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.BookReserve:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.FinePayment:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-            if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
-                if Request == Header.Fetch.DueUsers:
-                    Result = ViewUsersWithDues(CoreObject)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                if Request == Header.Add.BookIssue:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = IssueBook(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-        else:
-            await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
-
-
-def Handler1TCPHandler(Core: Init, Client, Data):
-    pass

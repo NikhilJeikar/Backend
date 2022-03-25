@@ -2,9 +2,10 @@ import hashlib
 import string
 import random
 import json
+import time
 from Init import Init
 from Constants import *
-from RequestHandler import WebHandler, TCPHandler, Handler1TCPHandler, Handler1WebHandler
+from RequestHandler import WebHandler, TCPHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord, \
     InitDeleteHistoryTable,InitBookIssue,InitBookReserve
 from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
@@ -52,8 +53,7 @@ def TCPRequestProcessing(Client, Address):
     Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
         TCPHandler(CoreObject, Client, Data)
-    if Handler == Header.Handler.Handler2:
-        Handler1TCPHandler(CoreObject, Client, Data)
+
 
 
 class WebSocketHandler:
@@ -74,11 +74,15 @@ async def WebRequestProcessing(WebSocket, Path):
     Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
         await WebHandler(CoreObject, Client, Data)
-    if Handler == Header.Handler.Handler2:
-        await Handler1WebHandler(CoreObject, Client, Data)
+
+
+def Routine():
+    while True:
+        time.sleep(60*60*24)
 
 
 CoreObject = Init(IP, WebPort, TCPPort)
+CoreObject.BindCalls(Routine)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
 CoreObject.WebRequestProcessing = WebRequestProcessing
 try:
@@ -87,18 +91,27 @@ except Exception as exception:
     print("Error: ", exception)
     exit(-1)
 
-# AddUser(CoreObject, "Nikhil", hashlib.sha512("qwerty".encode()).hexdigest(),
+# AddUser(CoreObject, "HOD", hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.SuperAdmin + Privileges.Admin + Privileges.User)
-# AddUser(CoreObject, "Admin", hashlib.sha512("qwerty".encode()).hexdigest(),
+# AddUser(CoreObject, "Librarian-1", hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.Admin + Privileges.User)
-# AddUser(CoreObject, "User", hashlib.sha512("qwerty".encode()).hexdigest(),
-#         Privileges.User)
 #
+# AddUser(CoreObject, "CB.EN.U4CSE19404", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
+# AddUser(CoreObject, "CB.EN.U4CSE19420", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
+# AddUser(CoreObject, "CB.EN.U4CSE19440", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
+# AddUser(CoreObject, "CB.EN.U4CSE19443", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
+# AddUser(CoreObject, "CB.EN.U4CSE19462", hashlib.sha512("qwerty".encode()).hexdigest(),
+#         Privileges.User)
+
 # for i in range(1000):
 #     AddBookRecord(CoreObject, f"Book-{i}", ''.join(random.choices(string.ascii_uppercase +
 #                                                                   string.digits, k=7)),
 #                   ''.join(random.choices(string.ascii_uppercase +
-#                                          string.digits, k=7)), random.randint(1, 100), random.randint(1, 3), "")
+#
 
 StorageObject = InitStorage(StorageName, StorageKey)
 CoreObject.Storage = StorageObject
