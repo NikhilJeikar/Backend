@@ -300,7 +300,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                             pass
                 elif Request == Header.Fetch.BookRequest:
                     Status = Data["Status"]
-                    UserName = Data["Username"]
+                    UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
                     if UserName != "":

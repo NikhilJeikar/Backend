@@ -229,7 +229,7 @@ def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
 
 def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like "
-                        "%s ORDER  BY ISBN {Sort};",
+                        f"%s ORDER  BY ISBN {Sort};",
                         (Author + "%", ))
     return Core.Cursor.fetchmany(N)
 
@@ -479,8 +479,8 @@ def RequestSubscription(Core: Init, UserName: str, Magazine: str, Email: str, St
 
 
 def GetSubscriptionRequest(Core: Init, SortBY: str = "UserName", Sort: str = "ASC"):
-    Core.Cursor.execute("Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s %s; ",
-                        (SortBY, Sort))
+    Core.Cursor.execute(f"Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s {Sort}; ",
+                        (SortBY, ))
     return Core.Cursor.fetchall()
 
 
@@ -520,14 +520,14 @@ def GetSubscriptionRequestBy(Core: Init, By: str, Value: str):
 
 def SearchMagazineByName(Core: Init, Name: str, N: int, Sort="ASC"):
     Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
-                        "JournalName like %s ORDER BY JournalName %s; ", (Name, Sort))
+                        f"JournalName like %s ORDER BY JournalName {Sort}; ", (Name, ))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchMagazineByAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord INNER JOIN "
                         "MagazinesAuthorRecord on MagazinesAuthorRecord.JournalName = MagazineRecord.JournalName WHERE"
-                        " MagazinesAuthorRecord.Author LIKE %s ORDER BY JournalName %s; ", (Author, Sort))
+                        f" MagazinesAuthorRecord.Author LIKE %s ORDER BY JournalName {Sort}; ", (Author,))
     return Core.Cursor.fetchmany(N)
 
 
