@@ -106,12 +106,13 @@ except Exception as exception:
 #         Privileges.User)
 # AddUser(CoreObject, "CB.EN.U4CSE19462", hashlib.sha512("qwerty".encode()).hexdigest(),
 #         Privileges.User)
-
+#
 # for i in range(1000):
 #     AddBookRecord(CoreObject, f"Book-{i}", ''.join(random.choices(string.ascii_uppercase +
 #                                                                   string.digits, k=7)),
 #                   ''.join(random.choices(string.ascii_uppercase +
-#
+#                                          string.digits, k=7)), random.randint(1, 100), random.randint(1, 3), "")
+
 
 StorageObject = InitStorage(StorageName, StorageKey)
 CoreObject.Storage = StorageObject

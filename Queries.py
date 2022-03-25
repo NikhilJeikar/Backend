@@ -60,7 +60,8 @@ def AddUser(Core: Init, Username: str, Password: str, Permission: int):
                             (Username, Password, ID, Permission))
         Core.Database.commit()
         return True
-    except mysql.connector.Error:
+    except mysql.connector.Error as e:
+        print(e)
         return False
 
 
@@ -69,16 +70,18 @@ def RemoveUser(Core: Init, Username: str):
         Core.Cursor.execute("DELETE FROM Credentials WHERE Username =  %s ;", (Username,))
         Core.Database.commit()
         return True
-    except mysql.connector.Error:
+    except mysql.connector.Error as e:
+        print(e)
         return False
 
 
 def UpdateUser(Core: Init, Username: str, Password: str, Permission: int):
-    if AddUser(Core, Username, Password, Permission):
+    try:
+        Core.Cursor.execute("UPDATE Credentials SET Password = %s,Privilege = %s WHERE Username =  %s ;", (Password,Permission, Username))
+        Core.Database.commit()
         return True
-    else:
-        if RemoveUser(Core, Username) and AddUser(Core, Username, Password, Permission):
-            return True
+    except mysql.connector.Error as e:
+        print(e)
         return False
 
 
@@ -223,14 +226,14 @@ def SearchBookName(Core: Init, Name: str, N: int, Sort="ASC"):
 def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type  FROM BooksRecord WHERE ISBN like %s "
                         f"ORDER  BY ISBN {Sort};",
-                        (ISBN + "%", ))
+                        (ISBN + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like "
                         f"%s ORDER  BY ISBN {Sort};",
-                        (Author + "%", ))
+                        (Author + "%",))
     return Core.Cursor.fetchmany(N)
 
 
@@ -479,8 +482,9 @@ def RequestSubscription(Core: Init, UserName: str, Magazine: str, Email: str, St
 
 
 def GetSubscriptionRequest(Core: Init, SortBY: str = "UserName", Sort: str = "ASC"):
-    Core.Cursor.execute(f"Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s {Sort}; ",
-                        (SortBY, ))
+    Core.Cursor.execute(
+        f"Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s {Sort}; ",
+        (SortBY,))
     return Core.Cursor.fetchall()
 
 
@@ -520,7 +524,7 @@ def GetSubscriptionRequestBy(Core: Init, By: str, Value: str):
 
 def SearchMagazineByName(Core: Init, Name: str, N: int, Sort="ASC"):
     Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
-                        f"JournalName like %s ORDER BY JournalName {Sort}; ", (Name, ))
+                        f"JournalName like %s ORDER BY JournalName {Sort}; ", (Name,))
     return Core.Cursor.fetchmany(N)
 
 
@@ -621,6 +625,7 @@ def UpdateMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Dat
             return True
         return False
 
+
 # Cataloguing
 def InitBookDatabase(Core: Init):
     if not TableExist(Core, "BooksRecord"):
@@ -662,54 +667,66 @@ def RemoveBookRecord(Core: Init, ISBN: str):
     except mysql.connector.Error:
         return False
 
+
 def InitDeleteHistoryTable(Core: Init):
     if not TableExist(Core, "DeleteHistory"):
-        Core.Cursor.execute("CREATE TABLE DeleteHistory (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
-                ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER);")
+        Core.Cursor.execute(
+            "CREATE TABLE DeleteHistory (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
+            ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER);")
         return True
     return False
 
+
 def ReadDeleteHistory(Core: Init):
-    Core.Cursor.execute("Select ISBN,BookName,Thumbnail,Author,Availability,Type from DeleteHistory", (RequestStatus.processing,))
+    Core.Cursor.execute("Select ISBN,BookName,Thumbnail,Author,Availability,Type from DeleteHistory",
+                        (RequestStatus.processing,))
     return Core.Cursor.fetchall()
+
 
 def PermanentDelete(Core: Init, ISBN: str):
     Core.Cursor.execute("DELETE FROM DeleteHistory where ISBN = %s;", (ISBN,))
     Core.Database.commit()
 
+
 # Circulation control
 def InitBookIssue(Core: Init):
     if not TableExist(Core, "BookIssue"):
         try:
-            Core.Cursor.execute("CREATE TABLE BookIssue(IssueID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), IssuedTo VARCHAR(128), dateIssued DATE NOT NULL,   FOREIGN KEY (ISBN) REFERENCES BooksRecord (ISBN), FOREIGN KEY (IssuedTo) REFERENCES Credentials (Username));")
+            Core.Cursor.execute(
+                "CREATE TABLE BookIssue(IssueID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), IssuedTo VARCHAR(128), dateIssued DATE NOT NULL,   FOREIGN KEY (ISBN) REFERENCES BooksRecord (ISBN), FOREIGN KEY (IssuedTo) REFERENCES Credentials (Username));")
             return True
         except mysql.connector.Error:
             return False
     return False
+
 
 def InitBookReserve(Core: Init):
     if not TableExist(Core, "BookReserve"):
         try:
-            Core.Cursor.execute("CREATE TABLE BookReserve(ReserveID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), ReservedTo VARCHAR(128), dateRequested DATE NOT NULL, FOREIGN KEY (ISBN) REFERENCES BooksRecord (ISBN), FOREIGN KEY (ReservedTo) REFERENCES Credentials (Username));")
+            Core.Cursor.execute(
+                "CREATE TABLE BookReserve(ReserveID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), ReservedTo VARCHAR(128), dateRequested DATE NOT NULL, FOREIGN KEY (ISBN) REFERENCES BooksRecord (ISBN), FOREIGN KEY (ReservedTo) REFERENCES Credentials (Username));")
             return True
         except mysql.connector.Error:
             return False
     return False
 
-def IssueBook(Core: Init,ISBN: str, username: str):
+
+def IssueBook(Core: Init, ISBN: str, username: str):
     Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s and Availability>0;", (ISBN,))
     result = Core.Cursor.fetchone()[0]
     if result:
         try:
-            if (IssueLimitonSingleBook(ISBN,username)==0 or IssueLimitonSingleBook(ISBN,username)==-1) and IssueLimitonTotalBook(username)==0:
+            if (IssueLimitonSingleBook(ISBN, username) == 0 or IssueLimitonSingleBook(ISBN,
+                                                                                      username) == -1) and IssueLimitonTotalBook(
+                username) == 0:
                 return False
             Core.Cursor.execute(
-                "INSERT INTO BookIssue(ISBN,IssuedTo,dateIssued) VALUES (%s, %s, SYSDATE());",(result,username,))
+                "INSERT INTO BookIssue(ISBN,IssuedTo,dateIssued) VALUES (%s, %s, SYSDATE());", (result, username,))
             Core.Database.commit()
-            Core.Cursor.execute("Select * from BookReserve where ISBN = %s and ReservedTo = %s;",(ISBN,username,))
+            Core.Cursor.execute("Select * from BookReserve where ISBN = %s and ReservedTo = %s;", (ISBN, username,))
             sub_result = Core.Cursor.fetchall()
             if sub_result:
-                Core.Cursor.execute("DELETE FROM BookReserve where ISBN = %s and ReservedTo = %s;", (ISBN,username,))
+                Core.Cursor.execute("DELETE FROM BookReserve where ISBN = %s and ReservedTo = %s;", (ISBN, username,))
                 Core.Database.commit()
                 return True
             else:
@@ -720,13 +737,15 @@ def IssueBook(Core: Init,ISBN: str, username: str):
             return False
     return False
 
-def BookReserval(Core: Init,ISBN: str, username: str):
+
+def BookReserval(Core: Init, ISBN: str, username: str):
     Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s and Availability>0;", (ISBN,))
     result = Core.Cursor.fetchone()[0]
     if result:
         try:
             Core.Cursor.execute(
-                "INSERT INTO BookReserve(ISBN,ReservedTo,dateRequested) VALUES (%s, %s, SYSDATE());", (result,username,))
+                "INSERT INTO BookReserve(ISBN,ReservedTo,dateRequested) VALUES (%s, %s, SYSDATE());",
+                (result, username,))
             Core.Cursor.execute(
                 "UPDATE BooksRecord SET Availability = Availability-1 WHERE ISBN = %s;", (ISBN,))
             Core.Database.commit()
@@ -735,13 +754,14 @@ def BookReserval(Core: Init,ISBN: str, username: str):
             return False
     return False
 
-def BookReturn(Core: Init,ISBN: str, username: str):
+
+def BookReturn(Core: Init, ISBN: str, username: str):
     Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s;", (ISBN,))
     result = Core.Cursor.fetchone()[0]
     if result:
         try:
             Core.Cursor.execute(
-                "DELETE FROM BookIssue WHERE ISBN = %s and IssuedTo = %s;", (ISBN,username,))
+                "DELETE FROM BookIssue WHERE ISBN = %s and IssuedTo = %s;", (ISBN, username,))
             Core.Database.commit()
             Core.Cursor.execute(
                 "UPDATE BooksRecord SET Availability = Availability+1 WHERE ISBN = %s;", (ISBN,))
@@ -751,8 +771,9 @@ def BookReturn(Core: Init,ISBN: str, username: str):
             return
     return False
 
-def BookRenewal(Core: Init,ISBN: str, username: str):
-    Core.Cursor.execute("Select dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN,username,))
+
+def BookRenewal(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN, username,))
     result = Core.Cursor.fetchone()[0]
     if result:
         try:
@@ -763,18 +784,21 @@ def BookRenewal(Core: Init,ISBN: str, username: str):
             if current_date > duedate:
                 print(current_date, " ", duedate, " ", datetime.today().strftime('%Y-%m-%d'))
                 Core.Cursor.execute("UPDATE BookIssue SET DateIssued = %s WHERE ISBN = %s and IssuedTo = %s;",
-                               (datetime.today().strftime('%Y-%m-%d'), ISBN, username,))
+                                    (datetime.today().strftime('%Y-%m-%d'), ISBN, username,))
                 Core.Database.commit()
             return True
         except mysql.connector.Error:
             return False
     return False
 
+
 def ViewUsersWithDues(Core: Init):
-    Core.Cursor.execute("Select IssueID,ISBN,IssuedTo,dateIssued from BookIssue where CURRENT_DATE()>(SELECT DATE_ADD(dateIssued, INTERVAL 14 DAY))")
+    Core.Cursor.execute(
+        "Select IssueID,ISBN,IssuedTo,dateIssued from BookIssue where CURRENT_DATE()>(SELECT DATE_ADD(dateIssued, INTERVAL 14 DAY))")
     Core.Cursor.fetchall()
 
-def FinePayment(Core: Init,ISBN: str,username: str):
+
+def FinePayment(Core: Init, ISBN: str, username: str):
     Core.Cursor.execute("Select dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN, username,))
     result = Core.Cursor.fetchone()[0]
     if result:
@@ -795,8 +819,10 @@ def FinePayment(Core: Init,ISBN: str,username: str):
             return False
     return False
 
-def IssueLimitonSingleBook(Core: Init,ISBN: str,username: str):
-    Core.Cursor.execute("Select ISBN,IssuedTo,dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN, username,))
+
+def IssueLimitonSingleBook(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select ISBN,IssuedTo,dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;",
+                        (ISBN, username,))
     result = Core.Cursor.fetchall()
     if len(result) == 0:
         return 0
@@ -809,10 +835,11 @@ def IssueLimitonSingleBook(Core: Init,ISBN: str,username: str):
                     return -1
         return 1
 
-def IssueLimitonTotalBook(Core: Init,username: str):
+
+def IssueLimitonTotalBook(Core: Init, username: str):
     Core.Cursor.execute("Select count(*) from BookIssue where IssuedTo = %s;", (username,))
     result = Core.Cursor.fetchone()[0]
-    if result>=10:
+    if result >= 10:
         return 0
     else:
         return 1
