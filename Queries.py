@@ -229,8 +229,8 @@ def SearchISBN(Core: Init, ISBN: str, N: int, Sort="ASC"):
 
 def SearchAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("SELECT BookName,ISBN,Thumbnail,Author,Availability,Type FROM BooksRecord WHERE Author like "
-                        "%s ORDER  BY ISBN %s;",
-                        (Author + "%", Sort))
+                        "%s ORDER  BY ISBN {Sort};",
+                        (Author + "%", ))
     return Core.Cursor.fetchmany(N)
 
 
