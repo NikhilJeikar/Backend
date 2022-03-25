@@ -28,8 +28,13 @@ class Init:
         self.Database = None
         self.Storage = None
         self.Cursor = None
+        self.__BindThread = None
         self.__WebSocket = None
         self.__InitDatabase()
+
+    def BindCalls(self, Func, *args, **kwargs):
+        self.__BindThread = Thread(target=Func, args=args, kwargs=kwargs)
+        self.__BindThread.start()
 
     def Start(self):
         self.__TCPThread = Thread(target=self.__InitTCP)
