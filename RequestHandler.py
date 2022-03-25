@@ -121,7 +121,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
                 elif Request == Header.Fetch.BookRequestStatus:
                     Status = Data["Status"]
-                    UserName = Data["Username"]
+                    UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
                     if UserName == GetUsername(CoreObject, ID):
