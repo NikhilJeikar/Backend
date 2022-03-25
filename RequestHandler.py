@@ -108,8 +108,8 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if BookParams.ISBN in Filters:
                         Lis += SearchISBN(CoreObject, ISBN, int(Count / len(Filters)), Sort)
                     if BookParams.Author in Filters:
-                        Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
-                    print(Parser(BaseData(Header.Success, BooksData(Lis))))
+                        Lis += SearchAuthor(CoreObject, Author[0], int(Count / len(Filters)), Sort)
+
                     await Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
