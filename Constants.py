@@ -81,6 +81,7 @@ class Header:
         MySubscription = "FetchMySubscription"
         MagazineRequest = "FetchSubscriptionRequest"
         CurrentSubscription = "FetchCurrentSubscription"
+        DueUsers = "FetchDueUsers"
 
     class Search:
         Books = "SearchBooks"
@@ -100,7 +101,11 @@ class Header:
         BookRequest = "AddBookRequest"
         MagazineRecord = "AddMagazineRecord"
         MagazineSubscriptionRequest = "AddSubscriptionRequest"
-
+        BookIssue = "AddBookIssue"
+        BookReserve = "AddBookReserve"
+        BookRenewal = "AddBookRenewal"
+        BookReturn = "AddBookReturn"
+        FinePayment = "AddFinePayment"
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
 StorageName = "librarymanagementsystem"

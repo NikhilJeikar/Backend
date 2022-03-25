@@ -848,8 +848,64 @@ def TCPHandler(CoreObject: Init, Client, Data):
             Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
 
 
-async def Handler1WebHandler(Core: Init, Client, Data):
-    pass
+async def Handler1WebHandler(CoreObject: Init, Client, Data):
+    ID = Data["ID"]
+    Request = Data["Header"]
+    if Request == Header.Login:
+        UserName = Data["UserName"]
+        Password = Data["Password"]
+        Ret = AuthUser(CoreObject, UserName, Password)
+        if Ret is not None:
+            await Client.send(Parser(BaseData(Header.Success, Ret)))
+        else:
+            await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Credentials)))
+    else:
+        if IsUserID(CoreObject, ID):
+            if GetPrivilegeByID(CoreObject, ID) & Privileges.User:
+                if Request == Header.Add.BookRenewal:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReturn:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReserve:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.FinePayment:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+            if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
+                if Request == Header.Fetch.DueUsers:
+                    Result = ViewUsersWithDues(CoreObject)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                if Request == Header.Add.BookIssue:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = IssueBook(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+        else:
+            await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
 
 
 def Handler1TCPHandler(Core: Init, Client, Data):

@@ -1,12 +1,12 @@
 import hashlib
 import string
 import random
-
 import json
 from Init import Init
 from Constants import *
 from RequestHandler import WebHandler, TCPHandler, Handler1TCPHandler, Handler1WebHandler
-from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord
+from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord, \
+    InitDeleteHistoryTable,InitBookIssue,InitBookReserve
 from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
     InitMagazineAuthorRecord
 from ThirdPartyAPI import InitStorage
@@ -37,6 +37,9 @@ def InitDatabase(Object: Init):
     InitMagazineAuthorRecord(CoreObject)
     InitStudentMagazineRecord(CoreObject)
     InitStudentMagazineRequestRecord(CoreObject)
+    InitBookIssue(Object)
+    InitBookReserve(Object)
+    InitDeleteHistoryTable(Object)
 
 
 def TCPRequestProcessing(Client, Address):
