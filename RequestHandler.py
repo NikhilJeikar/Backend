@@ -113,7 +113,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     await Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     User = Data["UserName"]
                     if RequestBooks(CoreObject, BookName, Author, User):
                         await Client.send(Parser(BaseData(Header.Success)))
