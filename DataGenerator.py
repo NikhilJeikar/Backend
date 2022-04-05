@@ -21,7 +21,7 @@ def BookData(ISBN, BookName, Author, Availability, Type, Thumbnail):
         "Type": Type,
         "Thumbnail": Thumbnail
     }
-    return json.dumps(Data)
+    return Data
 
 
 def BooksData(Books):
@@ -54,7 +54,7 @@ def NewsData(News, Time):
         "News": News,
         "Time": Time
     }
-    return json.dumps(Data)
+    return Data
 
 
 def MagazineData(Name, Volume, Issue, ReleaseDate, Location):
@@ -65,7 +65,7 @@ def MagazineData(Name, Volume, Issue, ReleaseDate, Location):
         "ReleaseDate": ReleaseDate,
         "Location": Location
     }
-    return json.dumps(Data)
+    return Data
 
 
 def MagazinesData(Magazines):
@@ -81,7 +81,7 @@ def SubscriptionData(JournalName, UserName, Email):
         "UserName": UserName,
         "Email": Email
     }
-    return json.dumps(Data)
+    return Data
 
 
 def SubscriptionsData(Subscriptions):
@@ -98,7 +98,7 @@ def SubscriptionRequestData(JournalName, UserName, Email, Status):
         "Email": Email,
         "Status": Status
     }
-    return json.dumps(Data)
+    return Data
 
 
 def SubscriptionRequestsData(Subscriptions):

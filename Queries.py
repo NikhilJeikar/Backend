@@ -31,7 +31,7 @@ TargetedHeadlinesUpdateTime = {"business": None,
 def TableExist(Core: Init, Name: str):
     Core.Cursor.execute("SHOW TABLES;")
     for x in Core.Cursor:
-        if x[0] == Name.lower():
+        if x[0] == Name:
             return True
     return False
 
