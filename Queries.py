@@ -282,7 +282,7 @@ def GetDigital(Core: Init, ISBN: str):
         if Data is None:
             return -2
         else:
-            return Data[0]
+            return Data
     except mysql.connector.Error:
         return -1
 
