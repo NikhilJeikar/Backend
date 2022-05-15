@@ -127,7 +127,6 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if UserName == GetUsername(CoreObject, ID):
                         if Status != "":
                             Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
-                            print(Out)
                             Count = len(Out)
                             if ULimit < 0:
                                 Out = BooksRequestData(Out)
@@ -137,6 +136,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         else:
                             Out = GetBookRequestsByUserName(CoreObject, UserName)
                             Count = len(Out)
+                            print(Out)
                             if ULimit < 0:
                                 Out = BooksRequestData(Out)
                             else:

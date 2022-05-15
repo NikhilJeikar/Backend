@@ -31,7 +31,7 @@ TargetedHeadlinesUpdateTime = {"business": None,
 def TableExist(Core: Init, Name: str):
     Core.Cursor.execute("SHOW TABLES;")
     for x in Core.Cursor:
-        if x[0] == Name.lower():
+        if x[0] == Name:
             return True
     return False
 
@@ -53,6 +53,7 @@ def InitUserTable(Core: Init):
 
 
 def AddUser(Core: Init, Username: str, Password: str, Permission: int):
+    Username = Username.lower()
     ID = hashlib.sha512(f"{Username}-"
                         f"{''.join(random.choices(string.ascii_uppercase + string.digits, k=10))}".encode()).hexdigest()
     try:
@@ -381,22 +382,22 @@ def UpdateBookRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int, By: s
 
 
 def GetBookRequests(Core: Init):
-    Core.Cursor.execute("Select * from RequestsRecord; ")
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord; ")
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByStatus(Core: Init, Status):
-    Core.Cursor.execute("Select * from RequestsRecord where Status = %s", (Status,))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where Status = %s", (Status,))
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByUserName(Core: Init, Name: str):
-    Core.Cursor.execute("Select * from RequestsRecord where RequestedBy = %s", (Name,))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where RequestedBy = %s", (Name,))
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByUserNameAndStatus(Core: Init, Name: str, Status):
-    Core.Cursor.execute("Select * from RequestsRecord where RequestedBy = %s AND Status = %s", (Name, Status))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where RequestedBy = %s AND Status = %s", (Name, Status))
     return Core.Cursor.fetchall()
 
 
