@@ -964,7 +964,7 @@ def budgetDistribution(Core: Init):
 
 # Feature - user
 def booksSuggestion(Core: Init, Username: str):
-    Core.Cursor.execute("Select ISBN, BookName from BooksRecord WHERE Availability>0 and Type IN "
+    Core.Cursor.execute("Select ISBN, BookName,Thumbnail from BooksRecord WHERE Availability>0 and Type IN "
                         "(SELECT Type from BooksRecord WHERE ISBN IN "
                         "(SELECT TOP 2 ISBN FROM BookIssue WHERE IssuedTo = %s ORDER BY dateIssued DESC));",
                         (Username,))
