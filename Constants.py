@@ -118,8 +118,8 @@ class Header:
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
-StorageName = "librarymanagementsystem"
-StorageKey = "JKA2Udzfs45cEJOvlBzxU0ogljCfXudcUjOckKbUeo6pwK90yGkyBZw8gohOQOjbcKMJxY6WpcypRFJhlHm5bg=="
+StorageName = "digilibrary"
+StorageKey = "pZqlOqhPiqYisVSKaljecpv4Htb31EQXRI4Sp+dRkxZQPkmPvyAcfd4ZmNAhBPR+VYQcdKOcOcmiFx4stUdO0w=="
 
 IP = "0.0.0.0"
 TCPPort = 24680
