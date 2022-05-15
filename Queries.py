@@ -6,7 +6,7 @@ import string
 import random
 import mysql.connector
 from newsapi.newsapi_client import NewsApiClient
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from Constants import *
 
 UpdateTime = None
@@ -77,7 +77,8 @@ def RemoveUser(Core: Init, Username: str):
 
 def UpdateUser(Core: Init, Username: str, Password: str, Permission: int):
     try:
-        Core.Cursor.execute("UPDATE Credentials SET Password = %s,Privilege = %s WHERE Username =  %s ;", (Password,Permission, Username))
+        Core.Cursor.execute("UPDATE Credentials SET Password = %s,Privilege = %s WHERE Username =  %s ;",
+                            (Password, Permission, Username))
         Core.Database.commit()
         return True
     except mysql.connector.Error as e:
@@ -345,9 +346,10 @@ def GetLatestNewsUpdateTime():
 
 def InitBookRequests(Core: Init):
     if not TableExist(Core, "RequestsRecord"):
-        Core.Cursor.execute("CREATE TABLE RequestsRecord (ReqNO INT(255) AUTO_INCREMENT PRIMARY KEY ,BookName VARCHAR("
-                            "512) ,Author VARCHAR(512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) "
-                            ",FOREIGN KEY (RequestedBy) REFERENCES Credentials (Username));")
+        Core.Cursor.execute(
+            "CREATE TABLE RequestsRecord (ReqNO INT(255) AUTO_INCREMENT PRIMARY KEY ,BookName VARCHAR(512),Authorized "
+            "VARCHAR(512),REASON VARCHAR(512) ,Author VARCHAR(512) ,RequestedBy VARCHAR(512) , Status VARCHAR(512) ,"
+            "FOREIGN KEY (RequestedBy) REFERENCES Credentials (Username));")
         return True
     return False
 
@@ -368,9 +370,10 @@ def GetBookRequestCount(Core: Init):
     return Core.Cursor.fetchone()
 
 
-def UpdateBookRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int):
+def UpdateBookRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int, By: str, Reason: str):
     try:
-        Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s where ReqNO = %s", (Status, ReqNo))
+        Core.Cursor.execute("UPDATE RequestsRecord SET Status = %s,Authorized = %s ,REASON = %s where ReqNO = %s",
+                            (Status, By, Reason, ReqNo))
         Core.Database.commit()
         return True
     except mysql.connector.Error:
@@ -571,6 +574,20 @@ def AddMagazine(Core: Init, Magazine: str):
         return False
 
 
+def GetMagazinePath(Core: Init, Magazine: str, Volume: str, Issue: str):
+    try:
+        Core.Cursor.execute(
+            "Select Location from MagazineRecord WHERE JournalName = %s AND Volume = %s AND Issue = %s; ",
+            (Magazine, Volume, Issue))
+        Data = Core.Cursor.fetchone()
+        if len(Data) > 0:
+            return Data[0]
+        else:
+            return None
+    except mysql.connector.Error:
+        return False
+
+
 def AddMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str, Location: str, Authors: list):
     try:
         Core.Cursor.execute("INSERT INTO MagazineRecord (JournalName ,Volume ,Issue ,ReleaseDate , Location ) VALUES "
@@ -627,46 +644,46 @@ def UpdateMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Dat
 
 
 # Cataloguing
-def InitBookDatabase(Core: Init):
-    if not TableExist(Core, "BooksRecord"):
-        try:
-            Core.Cursor.execute(
-                "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
-                ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
-            return True
-        except mysql.connector.Error:
-            return False
-    return False
-
-
-def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
-    try:
-        Core.Cursor.execute(
-            "INSERT INTO BooksRecord(BookName,ISBN,Thumbnail,Author,Availability,Type) VALUES (%s, %s,%s,%s,%s,%s);",
-            (Name, ISBN, Thumbnail, Author, Availability, Type))
-        Core.Database.commit()
-        return True
-    except mysql.connector.Error:
-        return False
-
-
-def UpdateBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
-    if AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
-        return True
-    else:
-        if RemoveBookRecord(Core, ISBN) and AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
-            return True
-        return False
-
-
-def RemoveBookRecord(Core: Init, ISBN: str):
-    try:
-        Core.Cursor.execute("DELETE FROM BooksRecord WHERE ISBN = %s;", (ISBN,))
-        Core.Database.commit()
-        return True
-    except mysql.connector.Error:
-        return False
-
+# def InitBookDatabase(Core: Init):
+#     if not TableExist(Core, "BooksRecord"):
+#         try:
+#             Core.Cursor.execute(
+#                 "CREATE TABLE BooksRecord (ISBN VARCHAR(512) PRIMARY KEY ,BookName VARCHAR(512),Thumbnail VARCHAR(4096)"
+#                 ",Author VARCHAR(512) ,Availability INTEGER , Type INTEGER );")
+#             return True
+#         except mysql.connector.Error:
+#             return False
+#     return False
+#
+#
+# def AddBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
+#     try:
+#         Core.Cursor.execute(
+#             "INSERT INTO BooksRecord(BookName,ISBN,Thumbnail,Author,Availability,Type) VALUES (%s, %s,%s,%s,%s,%s);",
+#             (Name, ISBN, Thumbnail, Author, Availability, Type))
+#         Core.Database.commit()
+#         return True
+#     except mysql.connector.Error:
+#         return False
+#
+#
+# def UpdateBookRecord(Core: Init, Name: str, ISBN: str, Author: str, Availability: int, Type: int, Thumbnail: str):
+#     if AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
+#         return True
+#     else:
+#         if RemoveBookRecord(Core, ISBN) and AddBookRecord(Core, Name, ISBN, Author, Availability, Type, Thumbnail):
+#             return True
+#         return False
+#
+#
+# def RemoveBookRecord(Core: Init, ISBN: str):
+#     try:
+#         Core.Cursor.execute("DELETE FROM BooksRecord WHERE ISBN = %s;", (ISBN,))
+#         Core.Database.commit()
+#         return True
+#     except mysql.connector.Error:
+#         return False
+#
 
 def InitDeleteHistoryTable(Core: Init):
     if not TableExist(Core, "DeleteHistory"):
@@ -688,6 +705,299 @@ def PermanentDelete(Core: Init, ISBN: str):
     Core.Database.commit()
 
 
+# Circulation control
+def InitBookIssue(Core: Init):
+    if not TableExist(Core, "BookIssue"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE BookIssue(IssueID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), IssuedTo "
+                "VARCHAR(128), dateIssued DATE NOT NULL, FOREIGN KEY (ISBN) REFERENCES BooksRecord (ISBN), "
+                "FOREIGN KEY (IssuedTo) REFERENCES Credentials (Username));")
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def InitBookReserve(Core: Init):
+    if not TableExist(Core, "BookReserve"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE BookReserve(ReserveID INT(255) AUTO_INCREMENT PRIMARY KEY, ISBN VARCHAR(512), "
+                "ReservedTo VARCHAR(128), dateRequested DATE NOT NULL, validity int, FOREIGN KEY (ISBN) REFERENCES "
+                "BooksRecord (ISBN), FOREIGN KEY (ReservedTo) REFERENCES Credentials (Username));")
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def InitBookReturn(Core: Init):
+    if not TableExist(Core, "BookReturn"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE BookReturn(IssueID INT(255) PRIMARY KEY, Returndate DATE NOT NULL, finecollected FLOAT, "
+                "FOREIGN KEY (IssueID) REFERENCES BooksIssue (IssueID));")
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def IssueBook(Core: Init, ISBN: str, username: str):
+    if IssueLimitonSingleBook(Core, ISBN, username) == -1 or IssueLimitonTotalBook(Core, username) == 0:
+        return False
+    Core.Cursor.execute("Select * from BookReserve where ISBN = %s and ReservedTo = %s and validity = %s;",
+                        (ISBN, username, 0))
+    sub_result = Core.Cursor.fetchone()[0]
+    if sub_result:
+        Core.Cursor.execute("UPDATE BookReserve SET validity = 1 where ISBN = %s and ReservedTo = %s;",
+                            (ISBN, username,))
+        Core.Database.commit()
+        Core.Cursor.execute(
+            "INSERT INTO BookIssue(ISBN,IssuedTo,dateIssued) VALUES (%s, %s, SYSDATE());", (ISBN, username,))
+        Core.Database.commit()
+        return True
+    else:
+        Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s and Availability>0;", (ISBN,))
+        result = Core.Cursor.fetchone()[0]
+        if result:
+            Core.Cursor.execute(
+                "INSERT INTO BookIssue(ISBN,IssuedTo,dateIssued) VALUES (%s, %s, SYSDATE());", (result, username,))
+            Core.Cursor.execute("UPDATE BooksRecord SET Availability = Availability-1 WHERE ISBN = %s;", (ISBN,))
+            Core.Database.commit()
+            return True
+        return False
+
+
+def BookReserval(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s and Availability>0;", (ISBN,))
+    result = Core.Cursor.fetchone()[0]
+    if result:
+        Core.Cursor.execute("Select * from BookReserve where ISBN = %s and ReservedTo = %s;", (ISBN, username))
+        result_1 = Core.Cursor.fetchone()
+        if result_1:
+            return False
+        try:
+            Core.Cursor.execute(
+                "INSERT INTO BookReserve(ISBN,ReservedTo,dateRequested,validity) VALUES (%s, %s, SYSDATE(), %s);",
+                (result, username, 0))
+            Core.Database.commit()
+            Core.Cursor.execute(
+                "UPDATE BooksRecord SET Availability = Availability-1 WHERE ISBN = %s;", (ISBN,))
+            Core.Database.commit()
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def BookReturn(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select ISBN from BooksRecord where ISBN = %s;", (ISBN,))
+    result = Core.Cursor.fetchone()[0]
+    if result:
+        try:
+            Core.Cursor.execute("Select IssueID from BookIssue where IssuedTo = %s and ISBN = %s;", (username, ISBN,))
+            result_1 = Core.Cursor.fetchone()[0]
+            FineAmount = FinePayment(Core, ISBN, username)
+            Core.Cursor.execute(
+                "INSERT INTO BookReturn(IssueID,Returndate,finecollected) VALUES (%s,SYSDATE(),%s);",
+                (result_1, FineAmount))
+            Core.Database.commit()
+            Core.Cursor.execute(
+                "UPDATE BooksRecord SET Availability = Availability+1 WHERE ISBN = %s;", (ISBN,))
+            Core.Database.commit()
+            InsertBudgetDetails(Core, "Fine", FineAmount, 0.0, "")
+            return True
+        except mysql.connector.Error:
+            return
+    return False
+
+
+def BookRenewal(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN, username,))
+    result = Core.Cursor.fetchone()
+    if result:
+        try:
+            Core.Cursor.execute("SELECT CURRENT_DATE();")
+            current_date = Core.Cursor.fetchone()[0]
+            current_date_temp = result[0]
+            duedate = current_date_temp + timedelta(days=14)
+            if current_date <= duedate:
+                print(current_date, " ", duedate, " ", datetime.today().strftime('%Y-%m-%d'))
+                Core.Cursor.execute("UPDATE BookIssue SET DateIssued = %s WHERE ISBN = %s and IssuedTo = %s;",
+                                    (datetime.today().strftime('%Y-%m-%d'), ISBN, username,))
+                Core.Database.commit()
+            else:
+                FineAmount = FinePayment(Core, ISBN, username)
+                InsertBudgetDetails(Core, "Fine", FineAmount, 0.0, "")
+                Core.Cursor.execute("UPDATE BookIssue SET DateIssued = %s WHERE ISBN = %s and IssuedTo = %s;",
+                                    (datetime.today().strftime('%Y-%m-%d'), ISBN, username,))
+                Core.Database.commit()
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def ViewUsersWithDues(Core: Init):
+    Core.Cursor.execute(
+        "Select IssueID,ISBN,IssuedTo,dateIssued from BookIssue where CURRENT_DATE()>(SELECT DATE_ADD(dateIssued, "
+        "INTERVAL 14 DAY))")
+    Core.Cursor.fetchall()
+
+
+def FinePayment(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;", (ISBN, username,))
+    result = Core.Cursor.fetchone()[0]
+    if result:
+        try:
+            Core.Cursor.execute("SELECT CURRENT_DATE();")
+            current_date = Core.Cursor.fetchone()[0]
+            current_date_temp = datetime.strptime(str(result), "%Y-%m-%d").date()
+            duedate = current_date_temp + timedelta(days=14)
+
+            if current_date > duedate:
+                date_format = "%Y-%m-%d"
+                a = datetime.strptime(str(current_date), date_format)
+                b = datetime.strptime(str(duedate), date_format)
+                delta = a - b
+                return int(delta.days) * 3
+            return 0
+        except mysql.connector.Error:
+            return 0
+    return 0
+
+
+def IssueLimitonSingleBook(Core: Init, ISBN: str, username: str):
+    Core.Cursor.execute("Select ISBN,IssuedTo,dateIssued from BookIssue where ISBN = %s and IssuedTo = %s;",
+                        (ISBN, username,))
+    result = Core.Cursor.fetchall()
+    if len(result) == 0:
+        return 1
+    else:
+        count = 0
+        for i in result:
+            if i[0] == ISBN and i[1] == username:
+                count += 1
+                if count > 2:
+                    return -1
+        return 1
+
+
+def IssueLimitonTotalBook(Core: Init, username: str):
+    Core.Cursor.execute("Select count(*) from BookIssue where IssuedTo = %s;", (username,))
+    result = Core.Cursor.fetchone()[0]
+    if result >= 10:
+        return 0
+    else:
+        return 1
+
+
+# Budget Allocation
+
+def InitBudget(Core: Init):
+    if not TableExist(Core, "Budget"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE Budget(BudgetID INT(255) AUTO_INCREMENT PRIMARY KEY, Src VARCHAR(512), Amount FLOAT , "
+                "UsedAmt FLOAT , Type VARCHAR(60));")
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def InitExpenditure(Core: Init):
+    if not TableExist(Core, "Expenditure"):
+        try:
+            Core.Cursor.execute(
+                "CREATE TABLE Expenditure(ExpenditureID INT(255) AUTO_INCREMENT PRIMARY KEY,BudgetID INT(255), "
+                "InvestedOn varchar(255), Amount FLOAT , FOREIGN KEY (BudgetID) REFERENCES Budget(BudgetID));")
+            return True
+        except mysql.connector.Error:
+            return False
+    return False
+
+
+def InsertBudgetDetails(Core: Init, Src: str, Amount: float, UsedAmt: float, Type: str):
+    try:
+        Core.Cursor.execute(
+            "INSERT INTO Budget(Src,Amount,UsedAmt,Type) VALUES (%s,%s,%s,%s);",
+            (Src, Amount, UsedAmt, Type))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
+
+
+def InsertExpDetails(Core: Init, BudgetID: int, InvestedOn: str, Amount: float):
+    try:
+        Core.Cursor.execute(
+            "INSERT INTO Expenditure(BudgetID, InvestedOn,Amount) VALUES (%s,%s,%s);",
+            (BudgetID, InvestedOn, Amount))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
+
+
+def viewTotalBudget(Core: Init):
+    Core.Cursor.execute(
+        "Select BudgetID, Src, Amount, UsedAmt, Type from Budget;")
+    Core.Cursor.fetchall()
+
+
+def viewRemainingBudget(Core: Init):
+    Core.Cursor.execute(
+        "Select Type,sum(Amount-UsedAmt) from budget GROUP BY Type;")
+    Core.Cursor.fetchall()
+
+
+def budgetDistribution(Core: Init):
+    Core.Cursor.execute(
+        "Select InvestedOn, Amount from Expenditure;")
+    Core.Cursor.fetchall()
+
+
+# Other features
+
+# Feature - user
+def booksSuggestion(Core: Init, Username: str):
+    Core.Cursor.execute("Select ISBN, BookName from BooksRecord WHERE Availability>0 and Type IN "
+                        "(SELECT Type from BooksRecord WHERE ISBN IN "
+                        "(SELECT TOP 2 ISBN FROM BookIssue WHERE IssuedTo = %s ORDER BY dateIssued DESC));",
+                        (Username,))
+    Core.Cursor.fetchall()
+
+
+# Feature - user
+def BooksIssuedUser(Core: Init, Username: str):
+    Core.Cursor.execute("Select ISBN,dateIssued from BookIssue IssuedTo = %s;", (Username,))
+    Core.Cursor.fetchall()
+
+
+# Feature - admin
+
+def UsersIssuedBook(Core: Init, ISBN: str):
+    Core.Cursor.execute("Select IssuedTo,dateIssued from BookIssue ISBN = %s;", (ISBN,))
+    Core.Cursor.fetchall()
+
+
+def timerForReserve(Core: Init):
+    Core.Cursor.execute("Select * from BookReserve;")
+    result = Core.Cursor.fetchall()
+    for i in result:
+        current_date = date.today()
+        date_format = "%Y-%m-%d"
+        a = datetime.strptime(str(current_date), date_format).date()
+        print(a)
+        if i[3] + timedelta(days=1) <= a:
+            Core.Cursor.execute("UPDATE BookReserve SET validilty=2 WHERE ReserveID=%s;", (i[0],))
+            Core.Database.commit()
+
+
+"""
 # Circulation control
 def InitBookIssue(Core: Init):
     if not TableExist(Core, "BookIssue"):
@@ -716,9 +1026,8 @@ def IssueBook(Core: Init, ISBN: str, username: str):
     result = Core.Cursor.fetchone()[0]
     if result:
         try:
-            if (IssueLimitonSingleBook(ISBN, username) == 0 or IssueLimitonSingleBook(ISBN,
-                                                                                      username) == -1) and IssueLimitonTotalBook(
-                username) == 0:
+            if (IssueLimitonSingleBook(ISBN, username) == 0 or IssueLimitonSingleBook(ISBN, username) == -1) and \
+                    IssueLimitonTotalBook(username) == 0:
                 return False
             Core.Cursor.execute(
                 "INSERT INTO BookIssue(ISBN,IssuedTo,dateIssued) VALUES (%s, %s, SYSDATE());", (result, username,))
@@ -813,7 +1122,7 @@ def FinePayment(Core: Init, ISBN: str, username: str):
                 a = datetime.strptime(str(current_date), date_format)
                 b = datetime.strptime(str(duedate), date_format)
                 delta = a - b
-                return (int(delta.days) * 3)
+                return int(delta.days) * 3
             return 0
         except mysql.connector.Error:
             return False
@@ -843,3 +1152,5 @@ def IssueLimitonTotalBook(Core: Init, username: str):
         return 0
     else:
         return 1
+
+"""

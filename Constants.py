@@ -71,18 +71,6 @@ class Header:
         MagazineRequest = "UpdateMagazineRequestStatus"
         MagazineRecord = "UpdateMagazineRecordStatus"
 
-    class Fetch:
-        DigitalBooks = "DigitalFetchBooks"
-        BookRecord = "FetchBooks"
-        News = "FetchNews"
-        BookRequest = "FetchBookRequest"
-        BookRequestStatus = "FetchBookRequestStatus"
-        MyMagazineRequest = "FetchMySubscriptionRequest"
-        MySubscription = "FetchMySubscription"
-        MagazineRequest = "FetchSubscriptionRequest"
-        CurrentSubscription = "FetchCurrentSubscription"
-        DueUsers = "FetchDueUsers"
-
     class Search:
         Books = "SearchBooks"
         Magazines = "SearchMagazine"
@@ -106,6 +94,28 @@ class Header:
         BookRenewal = "AddBookRenewal"
         BookReturn = "AddBookReturn"
         FinePayment = "AddFinePayment"
+        BudgetRecord = "AddBudgetRecord"
+        ExpenditureRecord = "AddExpenditureRecord"
+
+    class Fetch:
+        DigitalBooks = "DigitalFetchBooks"
+        BookRecord = "FetchBooks"
+        News = "FetchNews"
+        BookRequest = "FetchBookRequest"
+        BookRequestStatus = "FetchBookRequestStatus"
+        MyMagazineRequest = "FetchMySubscriptionRequest"
+        MySubscription = "FetchMySubscription"
+        MagazineRequest = "FetchSubscriptionRequest"
+        Magazine = "FetchMagazine"
+        CurrentSubscription = "FetchCurrentSubscription"
+        DueUsers = "FetchDueUsers"
+        TotalBudget = "FetchTotalBudget"
+        RemainingBudget = "FetchRemainingBudget"
+        BudgetDistribution = "FetchBudgetDistribution"
+        BookSuggestion = "FetchBookSuggestion"
+        BooksIssuedToUser = "FetchBooksIssuedToUser"
+        UserIssuedBook = "FetchUserIssuedBook"
+
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"
 StorageName = "librarymanagementsystem"

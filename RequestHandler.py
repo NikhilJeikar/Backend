@@ -127,6 +127,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if UserName == GetUsername(CoreObject, ID):
                         if Status != "":
                             Out = GetBookRequestsByUserNameAndStatus(CoreObject, UserName, Status)
+                            print(Out)
                             Count = len(Out)
                             if ULimit < 0:
                                 Out = BooksRequestData(Out)
@@ -166,6 +167,12 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if MagazineParams.Author in Filters:
                         Lis += SearchMagazineByAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
                     await Client.send(Parser(BaseData(Header.Success, Data=MagazinesData(Lis))))
+                elif Request == Header.Fetch.Magazine:
+                    Magazine = Data["BookName"]
+                    Issue = Data["Issue"]
+                    Volume = Data["Volume"]
+                    await Client.send(
+                        Parser(BaseData(Header.Success, Data=GetMagazinePath(CoreObject, Magazine, Volume, Issue))))
                 elif Request == Header.Fetch.MyMagazineRequest:
                     UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
@@ -203,7 +210,6 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
-
                 elif Request == Header.Add.BookRenewal:
                     UserName = GetUsername(CoreObject, ID)
                     Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
@@ -232,6 +238,49 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookRenewal:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReturn:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReserve:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.FinePayment:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    Username = Data['Username']
+                    Result = BooksIssuedUser(CoreObject, Username)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.BookSuggestion:
+                    Username = Data['Username']
+                    Result = booksSuggestion(CoreObject, Username)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -377,7 +426,9 @@ async def WebHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Update.BookRequest:
                     RequestID = Data["Misc"]
                     Status = Data["Status"]
-                    if UpdateBookRequestStatus(CoreObject, Status, RequestID):
+                    Admin = GetUsername(CoreObject, ID)
+                    Reason = Data["Reason"]
+                    if UpdateBookRequestStatus(CoreObject, Status, RequestID, Admin, Reason):
                         await Client.send(Parser(BaseData(Header.Success)))
                     else:
                         await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
@@ -457,19 +508,71 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     except FileNotFoundError:
                         pass
 
-                if Request == Header.Fetch.DueUsers:
+                elif Request == Header.Fetch.DueUsers:
                     Result = ViewUsersWithDues(CoreObject)
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                if Request == Header.Add.BookIssue:
+                elif Request == Header.Add.BookIssue:
                     UserName = GetUsername(CoreObject, ID)
                     Result = IssueBook(CoreObject, Data["ISBN"], UserName)
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.TotalBudget:
+                    Result = viewTotalBudget(CoreObject)
+                    if Result:
+                        await  Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.RemainingBudget:
+                    Result = viewRemainingBudget(CoreObject)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.BudgetDistribution:
+                    Result = budgetDistribution(CoreObject)
+                    if Result:
+                        await  Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BudgetRecord:
+                    Src = Data['Src']
+                    Amt = Data['BudgetAmt']
+                    UsedAmt = Data['UsedBudgetAmt']
+                    Type = Data['BudgetType']
+                    Result = InsertBudgetDetails(CoreObject, Src, Amt, UsedAmt, Type)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.ExpenditureRecord:
+                    Bid = Data['BudgetID']
+                    Invest = Data['InvestedOn']
+                    Amt = Data['ExpAmt']
+                    Result = InsertExpDetails(CoreObject, Bid, Invest, Amt)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    ISBN = Data['ISBN']
+                    Result = UsersIssuedBook(CoreObject, ISBN)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    Username = Data['Username']
+                    Result = BooksIssuedUser(CoreObject, Username)
+                    if Result:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.Admin:
                     UserName = Data["UserName"]
@@ -897,5 +1000,3 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
         else:
             Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
-
-

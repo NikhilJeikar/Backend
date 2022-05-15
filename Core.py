@@ -7,7 +7,7 @@ from Init import Init
 from Constants import *
 from RequestHandler import WebHandler, TCPHandler
 from Queries import InitBookDatabase, InitDigitalBookTable, InitUserTable, InitBookRequests, AddUser, AddBookRecord, \
-    InitDeleteHistoryTable,InitBookIssue,InitBookReserve
+    InitDeleteHistoryTable, InitBookIssue, InitBookReserve, timerForReserve, InitBookReturn, InitBudget, InitExpenditure
 from Queries import InitMagazines, InitMagazineRecord, InitStudentMagazineRecord, InitStudentMagazineRequestRecord, \
     InitMagazineAuthorRecord
 from ThirdPartyAPI import InitStorage
@@ -40,7 +40,10 @@ def InitDatabase(Object: Init):
     InitStudentMagazineRequestRecord(Object)
     InitBookIssue(Object)
     InitBookReserve(Object)
+    InitBookReturn(Object)
     InitDeleteHistoryTable(Object)
+    InitBudget(Object)
+    InitExpenditure(Object)
 
 
 def TCPRequestProcessing(Client, Address):
@@ -53,7 +56,6 @@ def TCPRequestProcessing(Client, Address):
     Handler = Data["Handler"]
     if Handler == Header.Handler.Handler1:
         TCPHandler(CoreObject, Client, Data)
-
 
 
 class WebSocketHandler:
@@ -76,12 +78,16 @@ async def WebRequestProcessing(WebSocket, Path):
         await WebHandler(CoreObject, Client, Data)
 
 
-def Routine():
-    while True:
-        time.sleep(60*60*24)
-
-
 CoreObject = Init(IP, WebPort, TCPPort)
+
+
+def Routine():
+    global CoreObject
+    while True:
+        time.sleep(60 * 60 * 24)
+        timerForReserve(CoreObject)
+
+
 CoreObject.BindCalls(Routine)
 CoreObject.TCPRequestProcessing = TCPRequestProcessing
 CoreObject.WebRequestProcessing = WebRequestProcessing
