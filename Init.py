@@ -68,7 +68,8 @@ class Init:
         # ssl_context.load_cert_chain("cert.pem", "cert.pem")
         # self.__WebSocket = websockets.serve(self.WebRequestProcessing, self.__IP, self.__WebPort, max_size=9000000,
         #                                     ssl=ssl_context)
-        self.__WebSocket = websockets.serve(self.WebRequestProcessing, self.__IP, self.__WebPort)
+        self.__WebSocket = websockets.serve(self.WebRequestProcessing, self.__IP, self.__WebPort,
+                                            max_size=1024 * 1024 * 1024)
         print("Websocket initialized")
         asyncio.get_event_loop().run_until_complete(self.__WebSocket)
         asyncio.get_event_loop().run_forever()

@@ -351,11 +351,11 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
-                        File = Data["Book"].encode()
+                        File = Data["Book"]
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
                         List2Bin(Save, File)
 
-                        File = Data["Thumbnail"].encode()
+                        File = Data["Thumbnail"]
                         Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
                         List2Bin(Save, File)
 
