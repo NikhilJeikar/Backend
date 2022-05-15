@@ -14,6 +14,15 @@ def PDF2Thumbnail(Path: str):
     return ""
 
 
+def List2Bin(File, Data: str):
+    Bytes = Data.replace('[', '')
+    Bytes = Bytes.replace(']', '')
+    Bytes = Bytes.replace(' ', '')
+    for i in Bytes.split(','):
+        File.write(int(i).to_bytes(1, 'big'))
+    File.close()
+
+
 async def WebHandler(CoreObject: Init, Client, Data):
     ID = Data["ID"]
     Request = Data["Header"]
@@ -136,7 +145,6 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         else:
                             Out = GetBookRequestsByUserName(CoreObject, UserName)
                             Count = len(Out)
-                            print(Out)
                             if ULimit < 0:
                                 Out = BooksRequestData(Out)
                             else:
@@ -280,7 +288,6 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         Client.send(Parser(BaseData(Header.Success, Data=Result)))
-
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -346,14 +353,14 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if Type & Avail.Online:
                         File = Data["Book"].encode()
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
-                        Save.write(File)
-                        Save.close()
+                        List2Bin(Save, File)
+
                         File = Data["Thumbnail"].encode()
                         Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
-                        Save.write(File)
-                        Save.close()
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
-                                                      "FilesCache/" + ISBN + ".jpeg")
+                        List2Bin(Save, File)
+
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpg",
+                                                      "FilesCache/" + ISBN + ".jpg")
                         FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
                         if AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                          ThumbnailUrl) and AddDigital(CoreObject, ISBN, FileUrl):
@@ -364,24 +371,23 @@ async def WebHandler(CoreObject: Init, Client, Data):
                             await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
 
                         try:
-                            os.remove("FilesCache/" + ISBN + ".jpeg")
+                            os.remove("FilesCache/" + ISBN + ".jpg")
                             os.remove("FilesCache/" + ISBN + ".pdf")
                         except FileNotFoundError:
                             pass
                     else:
-                        File = Data["Thumbnail"].encode()
+                        File = Data["Thumbnail"]
                         Save = open("FilesCache/" + ISBN + ".jpg", 'wb')
-                        Save.write(File)
-                        Save.close()
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
-                                                      "FilesCache/" + ISBN + ".jpeg")
+                        List2Bin(Save, File)
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpg",
+                                                      "FilesCache/" + ISBN + ".jpg")
                         if not AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                              ThumbnailUrl):
                             await Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
                         else:
                             await Client.send(Parser(BaseData(Header.Success)))
                         try:
-                            os.remove("FilesCache/" + ISBN + ".jpeg")
+                            os.remove("FilesCache/" + ISBN + ".jpg")
                         except FileNotFoundError:
                             pass
                 elif Request == Header.Fetch.BookRequest:
