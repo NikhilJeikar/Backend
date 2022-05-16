@@ -145,6 +145,54 @@ def UserIssuesData(UserIssues):
     return List
 
 
+def BudgetData(BudgetID, Src, Amount, UsedAmt, Type):
+    Data = {
+        "BudgetID": BudgetID,
+        "Src": Src,
+        "Amount": Amount,
+        "UsedAmt": UsedAmt,
+        "Type": Type
+    }
+    return Data
+
+
+def BudgetsData(Budgets):
+    List = []
+    for budget in Budgets:
+        List.append(BudgetData(budget[0], budget[1], budget[2], budget[3], budget[4]))
+    return List
+
+
+def ExpenditureData(InvestedOn, Amount):
+    Data = {
+        "InvestedOn": InvestedOn,
+        "Amount": Amount,
+    }
+    return Data
+
+
+def ExpendituresData(Expenditures):
+    List = []
+    for Expenditure in Expenditures:
+        List.append(ExpenditureData(Expenditure[0], Expenditure[1]))
+    return List
+
+
+def RemainingBudgetData(Type, RemainingAmt):
+    Data = {
+        "Type": Type,
+        "RemainingAmt": RemainingAmt,
+    }
+    return Data
+
+
+def RemainingBudgetsData(RemainingBudgets):
+    List = []
+    for RemainingBudget in RemainingBudgets:
+        List.append(RemainingBudgetData(RemainingBudget[0], RemainingBudget[1]))
+    return List
+
+
 def Request():
     Data = {
         "ID": "",

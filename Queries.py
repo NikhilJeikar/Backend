@@ -76,6 +76,15 @@ def RemoveUser(Core: Init, Username: str):
         return False
 
 
+def UpdateUserStatus(Core: Init, Username: str, Permission: int):
+    try:
+        Core.Cursor.execute("UPDATE Credentials SET Privilege = %s WHERE Username =  %s ;", (Permission, Username))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error as e:
+        print(e)
+        return False
+
 def UpdateUser(Core: Init, Username: str, Password: str, Permission: int):
     try:
         Core.Cursor.execute("UPDATE Credentials SET Password = %s,Privilege = %s WHERE Username =  %s ;",

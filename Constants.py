@@ -70,6 +70,7 @@ class Header:
         BookRequest = "UpdateBookRequestStatus"
         MagazineRequest = "UpdateMagazineRequestStatus"
         MagazineRecord = "UpdateMagazineRecordStatus"
+        UserStatus = "UpdateUserStatus"
 
     class Search:
         Books = "SearchBooks"
@@ -97,6 +98,10 @@ class Header:
         BudgetRecord = "AddBudgetRecord"
         ExpenditureRecord = "AddExpenditureRecord"
 
+    class Remove:
+        UserRecord = "RemoveUserRecord"
+        DeleteHistory = "RemoveDeleteHistory"
+
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
         BookRecord = "FetchBooks"
@@ -115,6 +120,7 @@ class Header:
         BookSuggestion = "FetchBookSuggestion"
         BooksIssuedToUser = "FetchBooksIssuedToUser"
         UserIssuedBook = "FetchUserIssuedBook"
+        DeleteHistory = "FetchDeleteHistory"
 
 
 NewsAPIClientKey = "9d61afd84fd840efafd110ab7e4fd55f"

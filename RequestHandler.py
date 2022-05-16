@@ -246,34 +246,6 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.BookRenewal:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.BookReturn:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.BookReserve:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Add.FinePayment:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
                 elif Request == Header.Fetch.UserIssuedBook:
                     Username = Data['Username']
                     Result = BooksIssuedUser(CoreObject, Username)
@@ -286,21 +258,24 @@ async def WebHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Fetch.BookSuggestion:
                     Username = Data['Username']
                     Result = booksSuggestion(CoreObject, Username)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    Count = len(Result)
+                    Out = BooksData(Result)
+                    if Out:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    Username = Data['Username']
+                    Result = BooksIssuedUser(CoreObject, Username)
+                    Count = len(Result)
+                    Out = BooksData(Result)
+                    if Out:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
 
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
-                if Request == Header.Create.User:
-                    UserName = Data["UserName"]
-                    Password = Data["Password"]
-                    Permission = Privileges.User
-                    if AddUser(CoreObject, UserName, Password, Permission):
-                        await Client.send(Parser(BaseData(Header.Success)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
-                elif Request == Header.Update.BookRecord:
+                if Request == Header.Update.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
                     Author = Data["Author"][0]
@@ -534,22 +509,28 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
                 elif Request == Header.Fetch.TotalBudget:
                     Result = viewTotalBudget(CoreObject)
-                    if Result:
-                        await  Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
-                    else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Fetch.RemainingBudget:
-                    Result = viewRemainingBudget(CoreObject)
-                    if Result:
+                    Count = len(Result)
+                    Out = BudgetsData(Result)
+                    if Out:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.RemainingBudget:
+                    Result = viewRemainingBudget(CoreObject)
+                    Count = len(Result)
+                    Out = RemainingBudgetsData(Result)
+                    if Out:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                 elif Request == Header.Fetch.BudgetDistribution:
                     Result = budgetDistribution(CoreObject)
-                    if Result:
-                        await  Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    Count = len(Result)
+                    Out = ExpendituresData(Result)
+                    if Out:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                 elif Request == Header.Add.BudgetRecord:
                     Src = Data['Src']
                     Amt = Data['BudgetAmt']
@@ -569,23 +550,32 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Fetch.UserIssuedBook:
+                elif Request == Header.Remove.DeleteHistory:
                     ISBN = Data['ISBN']
-                    Result = UsersIssuedBook(CoreObject, ISBN)
+                    Result = PermanentDelete(CoreObject, ISBN)
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         await Client.send(Parser(BaseData(Header.Success, Data=Result)))
-                elif Request == Header.Fetch.UserIssuedBook:
-                    Username = Data['Username']
-                    Result = BooksIssuedUser(CoreObject, Username)
+                elif Request == Header.Fetch.DeleteHistory:
+                    Result = ReadDeleteHistory(CoreObject)
+                    Count = len(Result)
+                    Result = BooksData(Result)
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result,Misc=Count)))
 
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
-                if Request == Header.Create.Admin:
+                if Request == Header.Create.User:
+                    UserName = Data["UserName"]
+                    Password = Data["Password"]
+                    Permission = Privileges.User
+                    if AddUser(CoreObject, UserName, Password, Permission):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Create.Admin:
                     UserName = Data["UserName"]
                     Password = Data["Password"]
                     Permission = Privileges.User + Privileges.Admin
@@ -593,6 +583,20 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         await Client.send(Parser(BaseData(Header.Success)))
                     else:
                         await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Remove.UserRecord:
+                    UserName = Data["UserName"]
+                    if RemoveUser(CoreObject, UserName):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Update.UserStatus:
+                    UserName = Data["UserName"]
+                    Status = Data["Status"]
+                    if UpdateUserStatus(CoreObject, UserName, int(Status)):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+
         else:
             await Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
 
