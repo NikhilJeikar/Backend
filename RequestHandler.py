@@ -277,10 +277,12 @@ async def WebHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Fetch.UserIssuedBook:
                     Username = Data['Username']
                     Result = BooksIssuedUser(CoreObject, Username)
-                    if Result:
-                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    Count = len(Result)
+                    Out = UserIssuesData(Result)
+                    if Out:
+                        await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                 elif Request == Header.Fetch.BookSuggestion:
                     Username = Data['Username']
                     Result = booksSuggestion(CoreObject, Username)
@@ -288,6 +290,7 @@ async def WebHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
                         Client.send(Parser(BaseData(Header.Success, Data=Result)))
+
             if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
                 if Request == Header.Create.User:
                     UserName = Data["UserName"]
@@ -472,14 +475,15 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     Issue = Data["Issue"]
                     ReleaseDate = Data["Misc"]
                     File = Data["Book"].encode()
-                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate.replace("/", "-") + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
                     FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
                                                    "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
-                    if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
-                                                                                   Issue, ReleaseDate, FileUrl,
-                                                                                   Authors):
+                    AddMagazine(CoreObject, MagazineName)
+                    if AddMagazineRecord(CoreObject, MagazineName, Volume,
+                                         Issue, ReleaseDate, FileUrl,
+                                         Authors):
                         await Client.send(Parser(BaseData(Header.Success)))
                     else:
                         RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
@@ -516,13 +520,14 @@ async def WebHandler(CoreObject: Init, Client, Data):
 
                 elif Request == Header.Fetch.DueUsers:
                     Result = ViewUsersWithDues(CoreObject)
+                    Count = len(Result)
+                    Result = IssuesData(Result)
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result, Misc=Count)))
                 elif Request == Header.Add.BookIssue:
-                    UserName = GetUsername(CoreObject, ID)
-                    Result = IssueBook(CoreObject, Data["ISBN"], UserName)
+                    Result = IssueBook(CoreObject, Data["ISBN"], Data["UserName"])
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:

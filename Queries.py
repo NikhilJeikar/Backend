@@ -382,22 +382,25 @@ def UpdateBookRequestStatus(Core: Init, Status: RequestStatus, ReqNo: int, By: s
 
 
 def GetBookRequests(Core: Init):
-    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord; ")
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status,REASON from RequestsRecord; ")
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByStatus(Core: Init, Status):
-    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where Status = %s", (Status,))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status,REASON from RequestsRecord where Status = %s",
+                        (Status,))
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByUserName(Core: Init, Name: str):
-    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where RequestedBy = %s", (Name,))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status,REASON from RequestsRecord where RequestedBy "
+                        "= %s", (Name,))
     return Core.Cursor.fetchall()
 
 
 def GetBookRequestsByUserNameAndStatus(Core: Init, Name: str, Status):
-    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status  from RequestsRecord where RequestedBy = %s AND Status = %s", (Name, Status))
+    Core.Cursor.execute("Select ReqNO,BookName,Author,RequestedBY,Status,REASON from RequestsRecord where RequestedBy "
+                        "= %s AND Status = %s", (Name, Status))
     return Core.Cursor.fetchall()
 
 
@@ -487,55 +490,57 @@ def RequestSubscription(Core: Init, UserName: str, Magazine: str, Email: str, St
 
 def GetSubscriptionRequest(Core: Init, SortBY: str = "UserName", Sort: str = "ASC"):
     Core.Cursor.execute(
-        f"Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s {Sort}; ",
+        f"Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord ORDER BY %s {Sort}; ",
         (SortBY,))
     return Core.Cursor.fetchall()
 
 
 def GetSubscriptionRequestByStatus(Core: Init, Status: int):
     Core.Cursor.execute(
-        "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE Status = %s; ",
+        "Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE Status = %s; ",
         (Status,))
     return Core.Cursor.fetchall()
 
 
 def GetSubscriptionRequestByUsername(Core: Init, Username: str):
     Core.Cursor.execute(
-        "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE UserName = %s; ",
+        "Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE UserName = %s; ",
         (Username,))
     return Core.Cursor.fetchall()
 
 
 def GetSubscriptionRequestByUsernameAndStatus(Core: Init, Username: str, Status: str):
     Core.Cursor.execute(
-        "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE UserName = %s AND Status = "
+        "Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE UserName = %s AND "
+        "Status = "
         "%s; ", (Username, Status))
     return Core.Cursor.fetchall()
 
 
 def GetSubscriptionRequestByJournalName(Core: Init, JournalName: str):
     Core.Cursor.execute(
-        "Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE JournalName = %s; ",
+        "Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE JournalName = %s; ",
         (JournalName,))
     return Core.Cursor.fetchall()
 
 
 def GetSubscriptionRequestBy(Core: Init, By: str, Value: str):
-    Core.Cursor.execute("Select JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE %s = %s; ",
+    Core.Cursor.execute("Select ReqNO,JournalName,UserName,Status,Email from StudentMagazineRequestRecord WHERE %s = "
+                        "%s; ",
                         (By, Value))
     return Core.Cursor.fetchall()
 
 
 def SearchMagazineByName(Core: Init, Name: str, N: int, Sort="ASC"):
     Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord WHERE "
-                        f"JournalName like %s ORDER BY JournalName {Sort}; ", (Name,))
+                        f"JournalName like %s ORDER BY JournalName {Sort}; ", (Name + "%",))
     return Core.Cursor.fetchmany(N)
 
 
 def SearchMagazineByAuthor(Core: Init, Author: str, N: int, Sort="ASC"):
     Core.Cursor.execute("Select JournalName ,Volume ,Issue ,ReleaseDate , Location from MagazineRecord INNER JOIN "
                         "MagazinesAuthorRecord on MagazinesAuthorRecord.JournalName = MagazineRecord.JournalName WHERE"
-                        f" MagazinesAuthorRecord.Author LIKE %s ORDER BY JournalName {Sort}; ", (Author,))
+                        f" MagazinesAuthorRecord.Author LIKE %s ORDER BY JournalName {Sort}; ", (Author + "%",))
     return Core.Cursor.fetchmany(N)
 
 
@@ -592,13 +597,15 @@ def GetMagazinePath(Core: Init, Magazine: str, Volume: str, Issue: str):
 def AddMagazineRecord(Core: Init, Magazine: str, Volume: str, Issue: str, Date: str, Location: str, Authors: list):
     try:
         Core.Cursor.execute("INSERT INTO MagazineRecord (JournalName ,Volume ,Issue ,ReleaseDate , Location ) VALUES "
-                            "(%s,%s,%s,%s,%s);", (Magazine, Volume, Issue, Date, Location))
+                            "(%s,%s,%s,%s,%s);",
+                            (Magazine, Volume, Issue, datetime.strptime(Date, "%m/%d/%y"), Location))
         Core.Database.commit()
         for i in Authors:
             Core.Cursor.execute(
                 "INSERT INTO MagazineAuthorRecord (JournalName ,ReleaseDate , Author ) VALUES "
                 "(%s,%s,%s);", (Magazine, Date, i))
             Core.Database.commit()
+        return True
     except mysql.connector.Error:
         return False
 
@@ -843,7 +850,9 @@ def BookRenewal(Core: Init, ISBN: str, username: str):
 
 def ViewUsersWithDues(Core: Init):
     Core.Cursor.execute(
-        "Select IssueID,ISBN,IssuedTo,dateIssued from BookIssue where CURRENT_DATE()>(SELECT DATE_ADD(dateIssued, "
+        "Select BookIssue.IssueID,BookIssue.ISBN,BooksRecord.BookName,BookIssue.IssuedTo,BookIssue.dateIssued from "
+        "BookIssue INNER JOIN BooksRecord ON BookIssue.ISBN = BooksRecord.ISBN where CURRENT_DATE()>(SELECT DATE_ADD("
+        "BookIssue.dateIssued, "
         "INTERVAL 14 DAY))")
     Core.Cursor.fetchall()
 
@@ -974,7 +983,8 @@ def booksSuggestion(Core: Init, Username: str):
 
 # Feature - user
 def BooksIssuedUser(Core: Init, Username: str):
-    Core.Cursor.execute("Select ISBN,dateIssued from BookIssue IssuedTo = %s;", (Username,))
+    Core.Cursor.execute("Select BookIssue.ISBN,BooksRecord.BookName,BookIssue.dateIssued from BookIssue INNER JOIN "
+                        "BooksRecord ON BookIssue.ISBN = BooksRecord.ISBN WHERE BookIssue.IssuedTo = %s;", (Username,))
     Core.Cursor.fetchall()
 
 

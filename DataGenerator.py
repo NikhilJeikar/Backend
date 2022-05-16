@@ -31,13 +31,14 @@ def BooksData(Books):
     return List
 
 
-def BookRequestData(RequestID, BookName, Author, RequestBy, Status):
+def BookRequestData(RequestID, BookName, Author, RequestBy, Status, Reason):
     Data = {
         "RequestID": RequestID,
         "BookName": BookName,
         "Author": Author,
         "RequestBy": RequestBy,
-        "Status": Status
+        "Status": Status,
+        "Reason": Reason
     }
     return json.dumps(Data)
 
@@ -45,7 +46,7 @@ def BookRequestData(RequestID, BookName, Author, RequestBy, Status):
 def BooksRequestData(Requests):
     List = []
     for Request in Requests:
-        List.append(BookRequestData(Request[0], Request[1], Request[2], Request[3], Request[4]))
+        List.append(BookRequestData(Request[0], Request[1], Request[2], Request[3], Request[4], Request[5]))
     return List
 
 
@@ -62,7 +63,7 @@ def MagazineData(Name, Volume, Issue, ReleaseDate, Location):
         "Name": Name,
         "Volume": Volume,
         "Issue": Issue,
-        "ReleaseDate": ReleaseDate,
+        "ReleaseDate": ReleaseDate.strftime("%m/%d/%Y"),
         "Location": Location
     }
     return Data
@@ -79,7 +80,7 @@ def SubscriptionData(JournalName, UserName, Email):
     Data = {
         "JournalName": JournalName,
         "UserName": UserName,
-        "Email": Email
+        "Status": Email
     }
     return Data
 
@@ -91,8 +92,9 @@ def SubscriptionsData(Subscriptions):
     return List
 
 
-def SubscriptionRequestData(JournalName, UserName, Email, Status):
+def SubscriptionRequestData(ID, JournalName, UserName, Status, Email):
     Data = {
+        "Id": ID,
         "JournalName": JournalName,
         "UserName": UserName,
         "Email": Email,
@@ -104,7 +106,42 @@ def SubscriptionRequestData(JournalName, UserName, Email, Status):
 def SubscriptionRequestsData(Subscriptions):
     List = []
     for Subscription in Subscriptions:
-        List.append(SubscriptionData(Subscription[0], Subscription[1], Subscription[2]))
+        List.append(SubscriptionRequestData(Subscription[0], Subscription[1], Subscription[2], Subscription[3],
+                                            Subscription[4]))
+    return List
+
+
+def IssueData(IssueID, ISBN, BookName, IssuedTo, dateIssued):
+    Data = {
+        "IssueID": IssueID,
+        "ISBN": ISBN,
+        "BookName": BookName,
+        "IssuedTo": IssuedTo,
+        "dateIssued": dateIssued
+    }
+    return Data
+
+
+def IssuesData(Issues):
+    List = []
+    for Issue in Issues:
+        List.append(IssueData(Issue[0], Issue[1], Issue[2], Issue[3], Issues[4]))
+    return List
+
+
+def UserIssueData(ISBN, BookName, dateIssued):
+    Data = {
+        "ISBN": ISBN,
+        "BookName": BookName,
+        "DateIssued": dateIssued
+    }
+    return Data
+
+
+def UserIssuesData(UserIssues):
+    List = []
+    for Issue in UserIssues:
+        List.append(UserIssueData(Issue[0], Issue[1], Issue[2]))
     return List
 
 
