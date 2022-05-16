@@ -609,7 +609,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
         Password = Data["Password"]
         Ret = AuthUser(CoreObject, UserName, Password)
         if Ret is not None:
-            Client.send(Parser(BaseData(Header.Success, Ret)))
+            Client.send(Parser(BaseData(Header.Success, Ret, Misc=GetPrivilegeByID(CoreObject, Ret))))
         else:
             Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Credentials)))
     else:
@@ -695,18 +695,20 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     if BookParams.ISBN in Filters:
                         Lis += SearchISBN(CoreObject, ISBN, int(Count / len(Filters)), Sort)
                     if BookParams.Author in Filters:
-                        Lis += SearchAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
+                        Lis += SearchAuthor(CoreObject, Author[0], int(Count / len(Filters)), Sort)
+
                     Client.send(Parser(BaseData(Header.Success, BooksData(Lis))))
                 elif Request == Header.Add.BookRequest:
                     BookName = Data["BookName"]
-                    Author = Data["Author"]
+                    Author = Data["Author"][0]
                     User = Data["UserName"]
                     if RequestBooks(CoreObject, BookName, Author, User):
                         Client.send(Parser(BaseData(Header.Success)))
-                    Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Server)))
                 elif Request == Header.Fetch.BookRequestStatus:
                     Status = Data["Status"]
-                    UserName = Data["Username"]
+                    UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
                     if UserName == GetUsername(CoreObject, ID):
@@ -751,8 +753,14 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     if MagazineParams.Author in Filters:
                         Lis += SearchMagazineByAuthor(CoreObject, Author, int(Count / len(Filters)), Sort)
                     Client.send(Parser(BaseData(Header.Success, Data=MagazinesData(Lis))))
+                elif Request == Header.Fetch.Magazine:
+                    Magazine = Data["BookName"]
+                    Issue = Data["Issue"]
+                    Volume = Data["Volume"]
+                    Client.send(
+                        Parser(BaseData(Header.Success, Data=GetMagazinePath(CoreObject, Magazine, Volume, Issue))))
                 elif Request == Header.Fetch.MyMagazineRequest:
-                    UserName = Data["Username"]
+                    UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
                     Status = Data["Status"]
@@ -788,16 +796,64 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
                     else:
                         Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
-            if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
-                if Request == Header.Create.User:
-                    UserName = Data["UserName"]
-                    Password = Data["Password"]
-                    Permission = Privileges.User
-                    if AddUser(CoreObject, UserName, Password, Permission):
-                        Client.send(Parser(BaseData(Header.Success)))
+                elif Request == Header.Add.BookRenewal:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookRenewal(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
-                elif Request == Header.Update.BookRecord:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReturn:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReturn(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.BookReserve:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = BookReserval(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.FinePayment:
+                    UserName = GetUsername(CoreObject, ID)
+                    Result = FinePayment(CoreObject, Data["ISBN"], UserName)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    Username = Data['Username']
+                    Result = BooksIssuedUser(CoreObject, Username)
+                    Count = len(Result)
+                    Out = UserIssuesData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.BookSuggestion:
+                    Username = Data['Username']
+                    Result = booksSuggestion(CoreObject, Username)
+                    Count = len(Result)
+                    Out = BooksData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.UserIssuedBook:
+                    Username = Data['Username']
+                    Result = BooksIssuedUser(CoreObject, Username)
+                    Count = len(Result)
+                    Out = BooksData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+
+            if GetPrivilegeByID(CoreObject, ID) & Privileges.Admin:
+                if Request == Header.Update.BookRecord:
                     Name = Data["BookName"]
                     ISBN = Data["ISBN"]
                     Author = Data["Author"][0]
@@ -808,8 +864,12 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
                         Save.write(File)
                         Save.close()
-                        Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                        File = Data["Thumbnail"].encode()
+                        Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                        Save.write(File)
+                        Save.close()
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
+                                                      "FilesCache/" + ISBN + ".jpeg")
                         FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
                         if UpdateBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                             ThumbnailUrl) and UpdateDigital(CoreObject, ISBN, FileUrl):
@@ -820,7 +880,7 @@ def TCPHandler(CoreObject: Init, Client, Data):
                             Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
 
                         try:
-                            os.remove("FilesCache/" + Thumbnail)
+                            os.remove("FilesCache/" + ISBN + ".jpeg")
                             os.remove("FilesCache/" + ISBN + ".pdf")
                         except FileNotFoundError:
                             pass
@@ -847,12 +907,16 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     Availability = Data["Availability"]
                     Type = int(Data["Type"])
                     if Type & Avail.Online:
-                        File = Data["Book"].encode()
+                        File = Data["Book"]
                         Save = open("FilesCache/" + ISBN + ".pdf", 'wb')
-                        Save.write(File)
-                        Save.close()
-                        Thumbnail = PDF2Thumbnail("FilesCache/" + ISBN + ".pdf")
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, Thumbnail, "FilesCache/" + Thumbnail)
+                        List2Bin(Save, File)
+
+                        File = Data["Thumbnail"]
+                        Save = open("FilesCache/" + ISBN + ".jpeg", 'wb')
+                        List2Bin(Save, File)
+
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpg",
+                                                      "FilesCache/" + ISBN + ".jpg")
                         FileUrl = StoreDigitalBooks(CoreObject.Storage, ISBN + ".pdf", "FilesCache/" + ISBN + ".pdf")
                         if AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                          ThumbnailUrl) and AddDigital(CoreObject, ISBN, FileUrl):
@@ -863,29 +927,28 @@ def TCPHandler(CoreObject: Init, Client, Data):
                             Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
 
                         try:
-                            os.remove("FilesCache/" + Thumbnail)
+                            os.remove("FilesCache/" + ISBN + ".jpg")
                             os.remove("FilesCache/" + ISBN + ".pdf")
                         except FileNotFoundError:
                             pass
                     else:
-                        File = Data["Thumbnail"].encode()
+                        File = Data["Thumbnail"]
                         Save = open("FilesCache/" + ISBN + ".jpg", 'wb')
-                        Save.write(File)
-                        Save.close()
-                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpeg",
-                                                      "FilesCache/" + ISBN + ".jpeg")
+                        List2Bin(Save, File)
+                        ThumbnailUrl = StoreThumbnail(CoreObject.Storage, ISBN + ".jpg",
+                                                      "FilesCache/" + ISBN + ".jpg")
                         if not AddBookRecord(CoreObject, Name, ISBN, Author, int(Availability), Type,
                                              ThumbnailUrl):
                             Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
                         else:
                             Client.send(Parser(BaseData(Header.Success)))
                         try:
-                            os.remove("FilesCache/" + ISBN + ".jpeg")
+                            os.remove("FilesCache/" + ISBN + ".jpg")
                         except FileNotFoundError:
                             pass
                 elif Request == Header.Fetch.BookRequest:
                     Status = Data["Status"]
-                    UserName = Data["Username"]
+                    UserName = Data["UserName"]
                     ULimit = Data["Range"][0]
                     LLimit = Data["Range"][1]
                     if UserName != "":
@@ -925,7 +988,9 @@ def TCPHandler(CoreObject: Init, Client, Data):
                 elif Request == Header.Update.BookRequest:
                     RequestID = Data["Misc"]
                     Status = Data["Status"]
-                    if UpdateBookRequestStatus(CoreObject, Status, RequestID):
+                    Admin = GetUsername(CoreObject, ID)
+                    Reason = Data["Reason"]
+                    if UpdateBookRequestStatus(CoreObject, Status, RequestID, Admin, Reason):
                         Client.send(Parser(BaseData(Header.Success)))
                     else:
                         Client.send(Parser(BaseData(Header.Failed, Failure.Server)))
@@ -963,14 +1028,15 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     Issue = Data["Issue"]
                     ReleaseDate = Data["Misc"]
                     File = Data["Book"].encode()
-                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf", 'wb')
+                    Save = open("FilesCache/" + MagazineName + "-" + ReleaseDate.replace("/", "-") + ".pdf", 'wb')
                     Save.write(File)
                     Save.close()
                     FileUrl = StoreDigitalMagazine(CoreObject.Storage, MagazineName + "-" + ReleaseDate + ".pdf",
                                                    "FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
-                    if AddMagazine(CoreObject, MagazineName) and AddMagazineRecord(CoreObject, MagazineName, Volume,
-                                                                                   Issue, ReleaseDate, FileUrl,
-                                                                                   Authors):
+                    AddMagazine(CoreObject, MagazineName)
+                    if AddMagazineRecord(CoreObject, MagazineName, Volume,
+                                         Issue, ReleaseDate, FileUrl,
+                                         Authors):
                         Client.send(Parser(BaseData(Header.Success)))
                     else:
                         RemoveMagazineRecord(CoreObject, MagazineName, ReleaseDate)
@@ -1004,8 +1070,90 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         os.remove("FilesCache/" + MagazineName + "-" + ReleaseDate + ".pdf")
                     except FileNotFoundError:
                         pass
+
+                elif Request == Header.Fetch.DueUsers:
+                    Result = ViewUsersWithDues(CoreObject)
+                    Count = len(Result)
+                    Result = IssuesData(Result)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result, Misc=Count)))
+                elif Request == Header.Add.BookIssue:
+                    Result = IssueBook(CoreObject, Data["ISBN"], Data["UserName"])
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.TotalBudget:
+                    Result = viewTotalBudget(CoreObject)
+                    Count = len(Result)
+                    Out = BudgetsData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.RemainingBudget:
+                    Result = viewRemainingBudget(CoreObject)
+                    Count = len(Result)
+                    Out = RemainingBudgetsData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Fetch.BudgetDistribution:
+                    Result = budgetDistribution(CoreObject)
+                    Count = len(Result)
+                    Out = ExpendituresData(Result)
+                    if Out:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Out, Misc=Count)))
+                elif Request == Header.Add.BudgetRecord:
+                    Src = Data['Src']
+                    Amt = Data['BudgetAmt']
+                    UsedAmt = Data['UsedBudgetAmt']
+                    Type = Data['BudgetType']
+                    Result = InsertBudgetDetails(CoreObject, Src, Amt, UsedAmt, Type)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Add.ExpenditureRecord:
+                    Bid = Data['BudgetID']
+                    Invest = Data['InvestedOn']
+                    Amt = Data['ExpAmt']
+                    Result = InsertExpDetails(CoreObject, Bid, Invest, Amt)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Remove.DeleteHistory:
+                    ISBN = Data['ISBN']
+                    Result = PermanentDelete(CoreObject, ISBN)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result)))
+                elif Request == Header.Fetch.DeleteHistory:
+                    Result = ReadDeleteHistory(CoreObject)
+                    Count = len(Result)
+                    Result = BooksData(Result)
+                    if Result:
+                        Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Success, Data=Result,Misc=Count)))
+
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
-                if Request == Header.Create.Admin:
+                if Request == Header.Create.User:
+                    UserName = Data["UserName"]
+                    Password = Data["Password"]
+                    Permission = Privileges.User
+                    if AddUser(CoreObject, UserName, Password, Permission):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Create.Admin:
                     UserName = Data["UserName"]
                     Password = Data["Password"]
                     Permission = Privileges.User + Privileges.Admin
@@ -1013,5 +1161,19 @@ def TCPHandler(CoreObject: Init, Client, Data):
                         Client.send(Parser(BaseData(Header.Success)))
                     else:
                         Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Remove.UserRecord:
+                    UserName = Data["UserName"]
+                    if RemoveUser(CoreObject, UserName):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                elif Request == Header.Update.UserStatus:
+                    UserName = Data["UserName"]
+                    Status = Data["Status"]
+                    if UpdateUserStatus(CoreObject, UserName, int(Status)):
+                        Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+
         else:
             Client.send(Parser(BaseData(Header.Error, Error=Error.Breach)))
