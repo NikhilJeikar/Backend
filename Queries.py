@@ -711,6 +711,15 @@ def InitDeleteHistoryTable(Core: Init):
     return False
 
 
+def RemoveBookRecord(Core: Init, ISBN: str):
+    try:
+        Core.Cursor.execute("DELETE FROM BooksRecord WHERE ISBN = %s;", (ISBN,))
+        Core.Database.commit()
+        return True
+    except mysql.connector.Error:
+        return False
+
+
 def ReadDeleteHistory(Core: Init):
     Core.Cursor.execute("Select ISBN,BookName,Thumbnail,Author,Availability,Type from DeleteHistory",
                         (RequestStatus.processing,))

@@ -101,6 +101,7 @@ class Header:
     class Remove:
         UserRecord = "RemoveUserRecord"
         DeleteHistory = "RemoveDeleteHistory"
+        BookRecord = "RemoveBook"
 
     class Fetch:
         DigitalBooks = "DigitalFetchBooks"
