@@ -564,7 +564,13 @@ async def WebHandler(CoreObject: Init, Client, Data):
                     if Result:
                         await Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Success, Data=Result,Misc=Count)))
+                        await Client.send(Parser(BaseData(Header.Success, Data=Result, Misc=Count)))
+                elif Request == Header.Remove.BookRecord:
+                    ISBN = Data['ISBN']
+                    if RemoveBookRecord(CoreObject, ISBN):
+                        await Client.send(Parser(BaseData(Header.Success)))
+                    else:
+                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
 
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.User:
@@ -1133,13 +1139,13 @@ def TCPHandler(CoreObject: Init, Client, Data):
                     if Result:
                         Client.send(Parser(BaseData(Header.Error, Error=Error.Unavailable)))
                     else:
-                        Client.send(Parser(BaseData(Header.Success, Data=Result,Misc=Count)))
+                        Client.send(Parser(BaseData(Header.Success, Data=Result, Misc=Count)))
                 elif Request == Header.Remove.BookRecord:
                     ISBN = Data['ISBN']
                     if RemoveBookRecord(CoreObject, ISBN):
-                        await Client.send(Parser(BaseData(Header.Success)))
+                        Client.send(Parser(BaseData(Header.Success)))
                     else:
-                        await Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
+                        Client.send(Parser(BaseData(Header.Failed, Failure=Failure.Exist)))
 
             if GetPrivilegeByID(CoreObject, ID) & Privileges.SuperAdmin:
                 if Request == Header.Create.User:
